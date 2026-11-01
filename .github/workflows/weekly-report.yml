@@ -10,7 +10,7 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: pip install pyyaml
       - run: python scripts/weekly_report.py --out /tmp/report.md
       - env:
