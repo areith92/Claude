@@ -39,5 +39,287 @@
   "alerts": [],
   "queue": {},
   "latest_digest": null,
-  "recent_costs": []
+  "recent_costs": [],
+  "conductor": "orchestrator",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "Plans the work, delegates tasks to department agents, reviews their proposals and prepares one digest for the owner. The owner decides. In free (manual) mode the owner pastes each prompt into the AI named in it.",
+      "enabled": true,
+      "dept": "conductor",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 2
+    },
+    {
+      "name": "listings",
+      "role": "Drafts eBay UK titles, descriptions and item specifics from catalogue data, following governance/policies/listing-rules.md.",
+      "enabled": true,
+      "dept": "sales",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 1.5
+    },
+    {
+      "name": "orders",
+      "role": "Reviews new orders by order ID, proposes shipping choices and flags delivery problems.",
+      "enabled": true,
+      "dept": "operations",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "messages",
+      "role": "Triages buyer messages and drafts replies. Escalates refunds, disputes and complaints to the owner.",
+      "enabled": true,
+      "dept": "customer",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "finance",
+      "role": "Reconciles payouts, fees and refunds and prepares the monthly accountant pack. Never gives tax advice.",
+      "enabled": true,
+      "dept": "finance",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0.5
+    },
+    {
+      "name": "compliance",
+      "role": "Checks proposed listings and actions against eBay rules, company policies and UK consumer-law notes in governance/policies/.",
+      "enabled": true,
+      "dept": "compliance",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 1
+    },
+    {
+      "name": "reviewer",
+      "role": "Gives an independent second opinion on high-risk proposals before they reach the owner.",
+      "enabled": true,
+      "dept": "compliance",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "monitor",
+      "role": "Watches AI spend, budgets, errors and account health signals. Mostly done by scripts.",
+      "enabled": true,
+      "dept": "monitoring",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "pricing",
+      "role": "Proposes price changes within catalogue/pricing-rules.yml.",
+      "enabled": false,
+      "dept": "sales",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "inventory",
+      "role": "Tracks stock, proposes reorders and compares suppliers.",
+      "enabled": false,
+      "dept": "operations",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "returns",
+      "role": "Handles return requests and cases within governance/policies/refunds.md.",
+      "enabled": false,
+      "dept": "operations",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "analytics",
+      "role": "Calculates margin per product and prepares dashboard data.",
+      "enabled": false,
+      "dept": "finance",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    }
+  ],
+  "departments": [
+    {
+      "id": "sales",
+      "label": "Sales",
+      "color": "#ff4d6d",
+      "agents": [
+        "listings",
+        "pricing"
+      ],
+      "tools": [
+        "eBay UK listings",
+        "Catalogue"
+      ]
+    },
+    {
+      "id": "operations",
+      "label": "Operations",
+      "color": "#22d3ee",
+      "agents": [
+        "orders",
+        "inventory",
+        "returns"
+      ],
+      "tools": [
+        "eBay UK orders",
+        "Stock sheet"
+      ]
+    },
+    {
+      "id": "customer",
+      "label": "Customer care",
+      "color": "#3b82f6",
+      "agents": [
+        "messages"
+      ],
+      "tools": [
+        "eBay messages"
+      ]
+    },
+    {
+      "id": "finance",
+      "label": "Finance",
+      "color": "#34d399",
+      "agents": [
+        "finance",
+        "analytics"
+      ],
+      "tools": [
+        "Cost log",
+        "Accountant pack"
+      ]
+    },
+    {
+      "id": "compliance",
+      "label": "Compliance",
+      "color": "#a78bfa",
+      "agents": [
+        "compliance",
+        "reviewer"
+      ],
+      "tools": [
+        "Policies",
+        "Approval tiers"
+      ]
+    },
+    {
+      "id": "monitoring",
+      "label": "Monitoring",
+      "color": "#fbbf24",
+      "agents": [
+        "monitor"
+      ],
+      "tools": [
+        "Budget guard",
+        "Kill switch"
+      ]
+    }
+  ],
+  "tasks": [],
+  "approvals": [],
+  "connections": [
+    {
+      "id": "claude",
+      "name": "Claude API",
+      "status": "in use",
+      "detail": "Agents on the API: orchestrator, listings, compliance. Key lives in GitHub secrets, never in the repo."
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini API",
+      "status": "in use",
+      "detail": "Agents on the API: reviewer. Free tier."
+    },
+    {
+      "id": "ebay",
+      "name": "eBay UK",
+      "status": "manual mode",
+      "detail": "Draft only. Needs EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REFRESH_TOKEN as GitHub secrets for Phase 2."
+    },
+    {
+      "id": "shopify",
+      "name": "Shopify",
+      "status": "not enabled",
+      "detail": "Reserved for Phase 4. Needs owner and accountant approval."
+    }
+  ],
+  "phases": {
+    "current": 1,
+    "list": [
+      {
+        "n": 1,
+        "name": "Draft only",
+        "text": "Agents write proposals. You approve and act by hand."
+      },
+      {
+        "n": 2,
+        "name": "Read-only eBay API",
+        "text": "Agents read orders, listings and traffic. Nothing is changed on eBay."
+      },
+      {
+        "n": 3,
+        "name": "Limited live actions",
+        "text": "Chosen actions run behind the approval tiers, one at a time, by pull request."
+      },
+      {
+        "n": 4,
+        "name": "Shopify channel",
+        "text": "A second sales channel, after owner and accountant approval."
+      }
+    ]
+  },
+  "brain": {
+    "count": 0,
+    "notes": []
+  }
 }
