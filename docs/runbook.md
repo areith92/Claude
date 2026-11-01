@@ -33,3 +33,7 @@ python scripts/orchestrate.py status shows the queue at any time. The Kill switc
 - The cap resets on the first of each month. To continue sooner, raise total_monthly_cap by pull request.
 - View the dashboard: python3 scripts/build_dashboard.py, then python3 -m http.server 8000 --directory dashboard.
 - The caps use estimated prices in models/costs.yml. Also set a monthly spend limit in the Anthropic Console as the independent backstop.
+
+## Dashboard
+python3 scripts/build_dashboard.py, then python3 -m http.server 8000 --directory dashboard. See dashboard/README.md.
+Add a new agent to dashboard/departments.yml or the tests will fail.
