@@ -1,0 +1,43 @@
+window.DASHBOARD = {
+  "month": "2026-11",
+  "as_of": null,
+  "mode": {
+    "provider": "manual",
+    "paused": false,
+    "dry_run_default": true
+  },
+  "spend": {
+    "spent_gbp": 0.0,
+    "cap_gbp": 5,
+    "remaining_gbp": 5.0,
+    "percent": 0.0,
+    "state": "ok",
+    "alert_at_percent": 80
+  },
+  "per_agent": [
+    {
+      "agent": "orchestrator",
+      "spent_gbp": 0,
+      "cap_gbp": 2
+    },
+    {
+      "agent": "listings",
+      "spent_gbp": 0,
+      "cap_gbp": 1.5
+    },
+    {
+      "agent": "finance",
+      "spent_gbp": 0,
+      "cap_gbp": 0.5
+    },
+    {
+      "agent": "compliance",
+      "spent_gbp": 0,
+      "cap_gbp": 1
+    }
+  ],
+  "alerts": [],
+  "queue": {},
+  "latest_digest": null,
+  "recent_costs": []
+};

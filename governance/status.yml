@@ -2,13 +2,13 @@ paused: false              # true stops every agent run (use the Kill switch wor
 provider: manual           # manual = free copy/paste mode | api = call Claude/Gemini APIs
 default_dry_run: true      # agents only propose; no live actions exist in this version
 agents:
-  orchestrator: {enabled: true,  dry_run: true}
-  listings:     {enabled: true,  dry_run: true}
+  orchestrator: {enabled: true,  dry_run: true, provider: api}
+  listings:     {enabled: true,  dry_run: true, provider: api}
   orders:       {enabled: true,  dry_run: true}
   messages:     {enabled: true,  dry_run: true}
   finance:      {enabled: true,  dry_run: true}
-  compliance:   {enabled: true,  dry_run: true}
-  reviewer:     {enabled: true,  dry_run: true}
+  compliance:   {enabled: true,  dry_run: true, provider: api}
+  reviewer:     {enabled: true,  dry_run: true, provider: api}
   monitor:      {enabled: true,  dry_run: true}
   pricing:      {enabled: false, dry_run: true}
   inventory:    {enabled: false, dry_run: true}

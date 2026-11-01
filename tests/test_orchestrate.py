@@ -89,6 +89,8 @@ class EndToEnd(unittest.TestCase):
             repo = pathlib.Path(tmp) / "repo"
             shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "__pycache__"))
             (repo / "operations/tasks/queue.yml").write_text("tasks: []\n")
+            st = repo / "governance/status.yml"
+            st.write_text(st.read_text().replace(", provider: api", ""))  # these tests run in manual mode
 
             r = self.run_cli(repo, "plan", "--goal", "Draft the first listing")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

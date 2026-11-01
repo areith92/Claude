@@ -1,8 +1,8 @@
-# Fill in GBP per million tokens from the provider's pricing page BEFORE using api mode.
-# A paid model with rates left at 0 is refused by run_agent.py.
+# GBP per million tokens. Claude Sonnet 5.5 list price is $2 input / $10 output; rounded UP at about 80p per dollar
+# so the budget guard errs on the safe side. Check platform.claude.com pricing and adjust.
 claude:
-  input_per_mtok_gbp: 0
-  output_per_mtok_gbp: 0
+  input_per_mtok_gbp: 1.60
+  output_per_mtok_gbp: 8.00
 gemini:
   free_tier: true                  # set false and add rates if you move to paid
   input_per_mtok_gbp: 0

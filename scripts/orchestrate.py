@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import yaml  # noqa: E402
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 from pii_guard import find_pii  # noqa: E402
+from budget_guard import read_stop_marker, spend_state  # noqa: E402
 
 QUEUE = ROOT / "operations" / "tasks" / "queue.yml"
 TIERS = ("auto", "needs_approval", "needs_owner_and_accountant")  # 'never' tasks are refused
@@ -294,10 +295,15 @@ def cmd_digest(a):
             t["status"] = "done"
             fyi.append(t)
     total, _ = month_totals()
-    cap = load_yaml("governance/budgets.yml")["ai_costs"]["total_monthly_cap"]
+    bcaps = load_yaml("governance/budgets.yml")["ai_costs"]
+    cap = bcaps["total_monthly_cap"]
+    marker = read_stop_marker(ROOT)
+    bstate = spend_state(total, cap, bcaps.get("alert_at_percent", 80), bool(marker and marker.get("scope") == "total"))
     L = [f"# Owner digest {now():%Y-%m-%d %H:%M} UTC", "",
          f"Mode: {status.get('provider')} | Paused: {status.get('paused')} | AI spend this month: {total:.2f} GBP of {cap} GBP cap", "",
          "## 1. Decisions needed"]
+    if bstate in ("warning", "stopped"):
+        L[2:2] = [f"**AI budget {bstate}: {total:.2f} GBP of {cap} GBP used this month. Paid agent calls stop at the cap. See the dashboard.**", ""]
     need = sorted([t for t in q["tasks"] if t["status"] == "replied"],
                   key=lambda t: (-SEVERITY.get(t.get("tier_effective", t["tier"]), 1), t["id"]))
     for t in need:

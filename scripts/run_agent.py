@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from budget_guard import spend_state, would_exceed, worst_case_cost, write_stop_marker  # noqa: E402
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 from pii_guard import find_pii  # noqa: E402
 
@@ -108,9 +109,15 @@ def main():
         return 4
     caps = load_yaml("governance/budgets.yml")["ai_costs"]
     total, per_agent = month_totals()
-    if not free and (total >= caps["total_monthly_cap"]
-                     or per_agent.get(a.agent, 0) >= caps["per_agent_monthly_cap"].get(a.agent, 0)):
-        print("Refused: AI budget cap reached (or still 0) in governance/budgets.yml.")
+    worst = worst_case_cost(len(prompt), model_cfg.get("max_tokens", 1500), rin, rout)
+    scope = None if free else would_exceed(total, per_agent.get(a.agent, 0), worst,
+                                           caps["total_monthly_cap"], caps["per_agent_monthly_cap"].get(a.agent, 0))
+    if scope:
+        cap = caps["total_monthly_cap"] if scope == "total" else caps["per_agent_monthly_cap"].get(a.agent, 0)
+        if cap > 0:
+            write_stop_marker(ROOT, a.agent, scope, total if scope == "total" else per_agent.get(a.agent, 0), cap)
+        print(f"STOPPED: this call could take {scope} AI spend past its cap in governance/budgets.yml "
+              f"(spent {total:.2f} GBP this month). Nothing was sent. Check the dashboard.")
         return 5
     key_name = "ANTHROPIC_API_KEY" if model_cfg["provider"] == "anthropic" else "GEMINI_API_KEY"
     key = os.environ.get(key_name)
@@ -125,6 +132,9 @@ def main():
     out = ROOT / "logs" / "actions" / name
     out.write_text(f"# Proposal from {a.agent} ({model_cfg['model']})\n{banner}\n{text}\n")
     print(f"Proposal written to {out.relative_to(ROOT)} (cost {cost:.4f} GBP)")
+    state = spend_state(total + cost, caps["total_monthly_cap"], caps.get("alert_at_percent", 80))
+    if state in ("warning", "stopped"):
+        print(f"BUDGET {state.upper()}: {total + cost:.2f} GBP of {caps['total_monthly_cap']} GBP used this month.")
     return 0
 
 
