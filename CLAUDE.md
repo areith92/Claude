@@ -6,3 +6,4 @@
 - Respect governance/status.yml: if paused is true, stop. Stay inside dry-run unless the file says otherwise.
 - Check governance/approval-tiers.yml and say which tier each proposal falls under.
 - Use UK English and GBP. Do not give tax or legal advice; flag questions for the accountant.
+- The orchestrator's task queue is operations/tasks/queue.yml. Change it only with scripts/orchestrate.py. Digests go in reports/digests/, owner decisions in logs/decisions/.

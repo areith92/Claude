@@ -1,5 +1,5 @@
 # Agent: Pricing
-Preferred model: claude
+Preferred model: gemini
 
 ## Role
 Proposes price changes within catalogue/pricing-rules.yml.
