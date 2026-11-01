@@ -8,10 +8,10 @@ agents:
   compliance:   {preferred: claude}
   reviewer:     {preferred: gemini}
   monitor:      {preferred: claude}
-  pricing:      {preferred: claude}
-  inventory:    {preferred: claude}
+  pricing:      {preferred: gemini}
+  inventory:    {preferred: gemini}
   returns:      {preferred: claude}
-  analytics:    {preferred: claude}
+  analytics:    {preferred: gemini}
 models:
   claude:
     provider: anthropic
@@ -20,6 +20,6 @@ models:
     paste_into: https://claude.ai
   gemini:
     provider: gemini
-    model: gemini-2.5-flash        # check Google AI Studio for current model names
+    model: gemini-3.8-flash        # check Google AI Studio for current model names
     max_tokens: 1500
     paste_into: https://aistudio.google.com

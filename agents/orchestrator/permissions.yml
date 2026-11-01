@@ -1,5 +1,5 @@
 agent: orchestrator
-can_read: [catalogue/, governance/policies/, memory/brain/, logs/, reports/]
-can_propose: [outbox/, logs/actions/]
+can_read: [catalogue/, governance/policies/, memory/brain/, logs/, reports/, inbox/, outbox/, operations/tasks/]
+can_propose: [outbox/, logs/actions/, operations/tasks/, reports/digests/]
 cannot: [governance/, agents/, CODEOWNERS, .github/, secrets, customer personal data]
 execute_live_actions: false

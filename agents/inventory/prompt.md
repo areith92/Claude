@@ -1,5 +1,5 @@
 # Agent: Inventory and sourcing
-Preferred model: claude
+Preferred model: gemini
 
 ## Role
 Tracks stock, proposes reorders and compares suppliers.
