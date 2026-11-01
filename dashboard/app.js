@@ -3,6 +3,26 @@
   const D = window.DASHBOARD;
   const SVGNS = "http://www.w3.org/2000/svg";
   const state = { filter: "all" };
+  const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const motion = { on: (function () {
+    let v = null;
+    try { v = localStorage.getItem("motion"); } catch (e) { v = null; }
+    return v === "on" ? true : v === "off" ? false : !reduced;
+  })(), chosen: (function () { try { return localStorage.getItem("motion") !== null; } catch (e) { return false; } })() };
+  function motionButton() {
+    const b = h("button", { class: "btn", type: "button" }), note = h("span", { class: "empty" });
+    const paint = function () {
+      b.textContent = "Motion: " + (motion.on ? "on" : "off");
+      note.textContent = reduced && !motion.chosen ? " Off because your system asks for reduced motion. Click to turn it on." : "";
+    };
+    b.addEventListener("click", function () {
+      motion.on = !motion.on; motion.chosen = true;
+      try { localStorage.setItem("motion", motion.on ? "on" : "off"); } catch (e) { /* storage unavailable */ }
+      paint();
+    });
+    paint();
+    return h("span", null, b, note);
+  }
 
   function add(e, kids) {
     kids.flat(3).forEach(function (k) {
@@ -215,21 +235,57 @@
   /* ---------- knowledge core ---------- */
   function seeded(seed) { let x = seed; return function () { x = (x * 16807) % 2147483647; return x / 2147483647; }; }
   function brainCloud(cx, cy, r, count, seed) {
-    const g = sv("g", { class: "cloud" }), rnd = seeded(seed), pts = [];
+    const g = sv("g", { class: "cloud" }), rnd = seeded(seed), R = r - 6, LINK = 22, MAXL = 340, pts = [], lines = [];
     for (let i = 0; i < count; i++) {
-      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (r - 6);
-      pts.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d]);
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * R, s = 8 + rnd() * 12, t = rnd() * Math.PI * 2;
+      pts.push({ x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, vx: Math.cos(t) * s, vy: Math.sin(t) * s });
     }
+    for (let i = 0; i < MAXL; i++) { const l = sv("line", { class: "cl", visibility: "hidden" }); lines.push(l); g.append(l); }
     pts.forEach(function (p, i) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const dx = p[0] - pts[j][0], dy = p[1] - pts[j][1];
-        if (dx * dx + dy * dy < 484 && (i + j) % 3 === 0) g.append(sv("line", { x1: p[0], y1: p[1], x2: pts[j][0], y2: pts[j][1], class: "cl" }));
-      }
-    });
-    pts.forEach(function (p, i) {
-      g.append(sv("circle", { cx: p[0], cy: p[1], r: i % 9 === 0 ? 2.6 : 1.5, class: "cp", style: "animation-delay:" + ((i % 12) * 0.25) + "s" }));
+      p.el = sv("circle", { cx: p.x, cy: p.y, r: i % 9 === 0 ? 2.6 : 1.5, class: "cp", style: "animation-delay:" + ((i % 12) * 0.25) + "s" });
+      g.append(p.el);
     });
     g.append(sv("circle", { cx: cx, cy: cy, r: r, class: "brain" }));
+    function frame(dt) {
+      pts.forEach(function (p) {
+        p.vx += (Math.random() - 0.5) * 70 * dt;
+        p.vy += (Math.random() - 0.5) * 70 * dt;
+        const sp = Math.hypot(p.vx, p.vy) || 1, k = Math.min(Math.max(sp, 8), 22) / sp;
+        p.vx *= k; p.vy *= k;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        const dx = p.x - cx, dy = p.y - cy, dist = Math.hypot(dx, dy);
+        if (dist > R) {
+          const nx = dx / dist, ny = dy / dist, dot = p.vx * nx + p.vy * ny;
+          p.x = cx + nx * R; p.y = cy + ny * R;
+          if (dot > 0) { p.vx -= 2 * dot * nx; p.vy -= 2 * dot * ny; }
+        }
+        p.el.setAttribute("cx", p.x.toFixed(1));
+        p.el.setAttribute("cy", p.y.toFixed(1));
+      });
+      let k = 0;
+      for (let i = 0; i < pts.length && k < MAXL; i++) {
+        for (let j = i + 1; j < pts.length && k < MAXL; j++) {
+          if ((i + j) % 3 !== 0) continue;
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d2 = dx * dx + dy * dy;
+          if (d2 >= LINK * LINK) continue;
+          const l = lines[k++];
+          l.setAttribute("x1", pts[i].x.toFixed(1)); l.setAttribute("y1", pts[i].y.toFixed(1));
+          l.setAttribute("x2", pts[j].x.toFixed(1)); l.setAttribute("y2", pts[j].y.toFixed(1));
+          l.style.strokeOpacity = (0.18 + 0.35 * (1 - Math.sqrt(d2) / LINK)).toFixed(2);
+          l.setAttribute("visibility", "visible");
+        }
+      }
+      for (; k < MAXL; k++) lines[k].setAttribute("visibility", "hidden");
+    }
+    frame(0);
+    let last = 0;
+    const tick = function (ts) {
+      if (!g.isConnected) return;
+      if (motion.on && ts - last >= 33) { frame(Math.min((ts - last) / 1000, 0.1)); last = ts; }
+      else if (!motion.on) last = ts;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
     return g;
   }
   function people(x, y) {
@@ -307,7 +363,7 @@
       ["#ff4d6d", "Tools", tools], ["#fbbf24", "Tasks", D.tasks.length]];
     return [head("knowledge core", d ? d.label.toUpperCase() : "COMMERCE ENGINE",
         h("div", { class: "infobox" }, D.brain.count + " notes in memory/brain · markdown · add notes by pull request")),
-      h("div", { class: "tabs" }, h("span", { class: "tab on" }, "Radial"), d ? h("a", { class: "btn", href: "#core" }, "← Back") : null),
+      h("div", { class: "tabs" }, h("span", { class: "tab on" }, "Radial"), d ? h("a", { class: "btn", href: "#core" }, "← Back") : null, motionButton()),
       h("div", { class: "cols graphcols" }, h("div", { class: "graphbox" }, d ? drill(d) : radial(f)),
         h("div", null, panel("FILTER", sel),
           panel("LEGEND", h("div", { class: "legend" }, legend.map(function (l) {
