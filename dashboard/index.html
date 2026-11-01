@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI business dashboard</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f3f5;--mut:#666;--ok:#1a7f37;--warn:#b7791f;--bad:#c62828}
+@media (prefers-color-scheme:dark){:root{--bg:#151517;--fg:#eee;--card:#222226;--mut:#9a9a9a;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem}h2{font-size:1.05rem;margin-top:24px}
+#banner{padding:12px 14px;border-radius:10px;font-weight:600;background:var(--card);border-left:6px solid var(--ok)}
+#banner.warning{border-color:var(--warn)}#banner.stopped{border-color:var(--bad)}#banner.off{border-color:var(--mut)}
+.bar{height:14px;background:var(--card);border-radius:7px;overflow:hidden;margin:10px 0}
+.bar div{height:100%;background:var(--ok)}.bar.warning div{background:var(--warn)}.bar.stopped div{background:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.card{background:var(--card);border-radius:10px;padding:12px}.card b{display:block;font-size:1.4rem}
+.mut{color:var(--mut);font-size:.85rem}.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--card);font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>AI business dashboard</h1>
+<div id="banner">Loading...</div>
+<div class="bar" id="bar"><div id="fill"></div></div>
+<p class="mut" id="meta"></p>
+<div class="grid" id="cards"></div>
+<h2>Alerts</h2><ul id="alerts"></ul>
+<h2>Spend by agent</h2><div class="wrap"><table id="agents"></table></div>
+<h2>Recent AI calls</h2><div class="wrap"><table id="costs"></table></div>
+<script src="status.js"></script>
+<script>
+const D = window.DASHBOARD;
+const $ = id => document.getElementById(id);
+function row(tag, cells){const tr=document.createElement('tr');cells.forEach(c=>{const e=document.createElement(tag);e.textContent=c;tr.appendChild(e);});return tr;}
+if (!D) {
+  $('banner').textContent = 'No data yet. Run: python3 scripts/build_dashboard.py';
+} else {
+  const s = D.spend;
+  const label = {ok:'AI spend is within budget', warning:'AI spend warning: nearing the monthly cap', stopped:'AI spend STOPPED: monthly cap reached', off:'Paid AI use is switched off'}[s.state] || s.state;
+  $('banner').textContent = label + ' (' + s.spent_gbp.toFixed(2) + ' of ' + s.cap_gbp + ' GBP, ' + D.month + ')';
+  $('banner').className = s.state; $('bar').className = 'bar ' + s.state;
+  $('fill').style.width = Math.min(s.percent, 100) + '%';
+  $('meta').textContent = 'Data as of ' + (D.as_of || 'no AI calls logged yet') + '. Rebuild with: python3 scripts/build_dashboard.py';
+  const cards = [['Remaining this month', s.remaining_gbp.toFixed(2) + ' GBP'], ['Used', s.percent + '%'],
+    ['Mode', D.mode.provider + (D.mode.paused ? ' (PAUSED)' : '')], ['Latest digest', D.latest_digest || 'none'],
+    ['Tasks', Object.keys(D.queue).map(k => k + ': ' + D.queue[k]).join(', ') || 'none']];
+  cards.forEach(c => { const d = document.createElement('div'); d.className = 'card';
+    const b = document.createElement('b'); b.textContent = c[1]; const m = document.createElement('span'); m.className = 'mut'; m.textContent = c[0];
+    d.appendChild(b); d.appendChild(m); $('cards').appendChild(d); });
+  (D.alerts.length ? D.alerts : ['No alerts']).forEach(t => { const li = document.createElement('li'); li.textContent = t; $('alerts').appendChild(li); });
+  $('agents').appendChild(row('th', ['Agent', 'Spent (GBP)', 'Cap (GBP)']));
+  D.per_agent.forEach(a => $('agents').appendChild(row('td', [a.agent, a.spent_gbp.toFixed(4), a.cap_gbp])));
+  $('costs').appendChild(row('th', ['Date', 'Agent', 'Model', 'Tokens', 'Cost (GBP)']));
+  D.recent_costs.forEach(r => $('costs').appendChild(row('td', [r.date, r.agent, r.model, r.tokens, r.cost_gbp.toFixed(4)])));
+}
+</script>
+</body>
+</html>

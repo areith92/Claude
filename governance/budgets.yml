@@ -1,13 +1,14 @@
 currency: GBP
-ai_costs:                  # 0 means no paid API use is allowed yet
-  total_monthly_cap: 0
+ai_costs:                  # 0 means no paid API use is allowed for that agent
+  total_monthly_cap: 5     # hard stop: a call that could take spend past this is never sent
+  alert_at_percent: 80     # warning on the dashboard and a GitHub issue at this level
   per_agent_monthly_cap:
-    orchestrator: 0
-    listings: 0
+    orchestrator: 2
+    listings: 1.5
     orders: 0
     messages: 0
-    finance: 0
-    compliance: 0
+    finance: 0.5
+    compliance: 1
     reviewer: 0
     monitor: 0
     pricing: 0

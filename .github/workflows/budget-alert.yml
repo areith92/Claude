@@ -1,0 +1,38 @@
+name: Budget alert
+# Rebuilds the dashboard data and opens a GitHub issue (once per month per level) when AI spend hits the warning level or the cap.
+on:
+  push:
+    branches: [main]
+    paths: ["logs/costs.csv", "logs/budget-stop.json", "governance/budgets.yml"]
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pyyaml
+      - name: Build dashboard data
+        run: python scripts/build_dashboard.py --alert-file /tmp/alert.md
+      - name: Commit dashboard data if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard/status.json dashboard/status.js
+          git diff --cached --quiet || (git commit -m "Update dashboard data" && git push)
+      - name: Open an alert issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -s /tmp/alert.md ] || exit 0
+          title=$(head -1 /tmp/alert.md | sed 's/^# //')
+          gh label create budget-alert --color D93F0B --force >/dev/null 2>&1 || true
+          if gh issue list --label budget-alert --state all --limit 100 --json title --jq '.[].title' | grep -Fxq "$title"; then
+            echo "Alert already raised: $title"
+          else
+            gh issue create --title "$title" --label budget-alert --body-file /tmp/alert.md
+          fi

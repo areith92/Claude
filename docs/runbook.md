@@ -14,3 +14,22 @@ Actions > Kill switch > Run workflow (pause = true).
 
 ## Monthly
 python scripts/new_accountant_pack.py and fill in the checklist.
+
+## Orchestrator (free mode)
+1. python scripts/orchestrate.py plan --goal "Draft the first three listings"
+   Paste the prompt from outbox/ into Claude and save the reply in inbox/ with the same file name.
+2. python scripts/orchestrate.py ingest inbox/<that file> --delegate
+   Paste each new outbox/ prompt into the AI it names and save each reply in inbox/ with the same file name.
+3. python scripts/orchestrate.py review   (optional second look; paste, save the reply in inbox/)
+4. python scripts/orchestrate.py digest   then read the newest file in reports/digests/
+5. python scripts/orchestrate.py decide T-YYYYMMDD-001 approved --reason "why"
+   Approved work is done by hand. Then: python scripts/orchestrate.py complete T-YYYYMMDD-001
+6. Commit on a branch and open a pull request. Merging records your sign-off.
+python scripts/orchestrate.py status shows the queue at any time. The Kill switch workflow stops everything.
+
+## AI spend cap and alerts
+- governance/budgets.yml sets total_monthly_cap (GBP) and a cap per agent. A call that could take spend past a cap is never sent.
+- At alert_at_percent (80) the dashboard shows a warning and the Budget alert workflow opens a GitHub issue. At the cap it opens a STOPPED issue.
+- The cap resets on the first of each month. To continue sooner, raise total_monthly_cap by pull request.
+- View the dashboard: python3 scripts/build_dashboard.py, then python3 -m http.server 8000 --directory dashboard.
+- The caps use estimated prices in models/costs.yml. Also set a monthly spend limit in the Anthropic Console as the independent backstop.

@@ -1,5 +1,5 @@
 # Agent: Analytics
-Preferred model: claude
+Preferred model: gemini
 
 ## Role
 Calculates margin per product and prepares dashboard data.
