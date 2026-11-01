@@ -1,0 +1,3 @@
+# Limits for scripts/orchestrate.py. Owner edits by pull request.
+max_tasks_per_run: 3
+max_review_chars_per_reply: 6000
