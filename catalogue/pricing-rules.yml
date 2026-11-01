@@ -1,0 +1,6 @@
+currency: GBP
+min_margin_pct: 20
+never_below_cost: true
+round_to: 0.99
+max_auto_change_pct: 5
+ebay_fee_assumption_pct: 0         # fill in from your eBay fee statement

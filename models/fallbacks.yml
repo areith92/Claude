@@ -1,0 +1,3 @@
+on_api_error: switch_agent_to_manual
+on_budget_exceeded: stop_and_notify_owner
+on_provider_outage: use_manual_mode

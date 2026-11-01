@@ -1,0 +1,20 @@
+currency: GBP
+ai_costs:                  # 0 means no paid API use is allowed yet
+  total_monthly_cap: 0
+  per_agent_monthly_cap:
+    orchestrator: 0
+    listings: 0
+    orders: 0
+    messages: 0
+    finance: 0
+    compliance: 0
+    reviewer: 0
+    monitor: 0
+    pricing: 0
+    inventory: 0
+    returns: 0
+    analytics: 0
+spend:                     # real-money limits that need your approval to use
+  promoted_listings_monthly_cap: 0
+  stock_purchases_monthly_cap: 0
+  other_monthly_cap: 0

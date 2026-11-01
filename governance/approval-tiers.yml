@@ -1,0 +1,18 @@
+# Starter values. Change them to suit you.
+tiers:
+  auto:
+    approval: none
+    examples: [draft listing text, triage a message, reconcile fees, internal reports]
+  needs_approval:
+    approval: owner
+    examples: [publish or revise a listing, price change over threshold, new supplier, refund over threshold, promoted listings spend, reorder stock]
+  needs_owner_and_accountant:
+    approval: owner and accountant
+    examples: [VAT or tax treatment, new sales channel, change to bookkeeping categories]
+  never:
+    approval: not allowed
+    examples: [move money, change governance, change agent permissions, store customer personal data, message buyers outside eBay]
+thresholds:
+  price_change_pct: 5
+  refund_gbp: 20
+  single_spend_gbp: 25

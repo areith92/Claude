@@ -1,0 +1,8 @@
+channel: shopify
+enabled: false                     # do not enable until docs/shopify-expansion.md is complete and approved
+region: GB
+currency: GBP
+api:
+  mode: manual
+  secrets: [SHOPIFY_STORE_DOMAIN, SHOPIFY_ADMIN_TOKEN]
+launch_requires: [owner approval, accountant approval, checklist complete]

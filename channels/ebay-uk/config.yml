@@ -1,0 +1,8 @@
+channel: ebay-uk
+enabled: true
+marketplace: EBAY_GB
+currency: GBP
+ships_to: [GB]
+api:
+  mode: manual                     # manual | api (api needs an eBay developer account and OAuth tokens in GitHub Secrets)
+  secrets: [EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REFRESH_TOKEN]

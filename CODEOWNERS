@@ -1,0 +1,8 @@
+# Enforced only when branch protection with "Require review from Code Owners" is on
+# (free on public repos; GitHub Pro or Team for private repos).
+/governance/            @YOUR-GITHUB-USERNAME
+/agents/*/permissions.yml @YOUR-GITHUB-USERNAME
+/.github/               @YOUR-GITHUB-USERNAME
+/models/                @YOUR-GITHUB-USERNAME
+/channels/*/config.yml  @YOUR-GITHUB-USERNAME
+/CODEOWNERS             @YOUR-GITHUB-USERNAME

@@ -1,0 +1,9 @@
+# Fill in GBP per million tokens from the provider's pricing page BEFORE using api mode.
+# A paid model with rates left at 0 is refused by run_agent.py.
+claude:
+  input_per_mtok_gbp: 0
+  output_per_mtok_gbp: 0
+gemini:
+  free_tier: true                  # set false and add rates if you move to paid
+  input_per_mtok_gbp: 0
+  output_per_mtok_gbp: 0

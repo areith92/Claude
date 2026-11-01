@@ -1,0 +1,25 @@
+name: Approval gate
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Label by risk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE: ${{ github.base_ref }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(git diff --name-only "origin/$BASE"...HEAD)
+          labels=""
+          echo "$files" | grep -qE '^(governance/|CODEOWNERS|\.github/|models/|agents/[^/]+/permissions\.yml)' && labels="$labels needs-owner" || true
+          echo "$files" | grep -qE '^(governance/policies/vat-and-tax\.md|agents/finance/)' && labels="$labels needs-accountant" || true
+          echo "$files" | grep -qE '^channels/[^/]+/config\.yml' && labels="$labels new-channel" || true
+          for l in needs-owner needs-accountant new-channel; do gh label create "$l" --force >/dev/null 2>&1 || true; done
+          for l in $labels; do gh pr edit "$PR" --add-label "$l"; done
+          echo "Labels applied: ${labels:-none}"

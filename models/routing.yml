@@ -1,0 +1,25 @@
+# preferred = which AI handles the agent. In manual mode this tells you where to paste the prompt.
+agents:
+  orchestrator: {preferred: claude}
+  listings:     {preferred: claude}
+  orders:       {preferred: claude}
+  messages:     {preferred: gemini}
+  finance:      {preferred: claude}
+  compliance:   {preferred: claude}
+  reviewer:     {preferred: gemini}
+  monitor:      {preferred: claude}
+  pricing:      {preferred: claude}
+  inventory:    {preferred: claude}
+  returns:      {preferred: claude}
+  analytics:    {preferred: claude}
+models:
+  claude:
+    provider: anthropic
+    model: claude-sonnet-5-5       # check docs.claude.com for current model names
+    max_tokens: 1500
+    paste_into: https://claude.ai
+  gemini:
+    provider: gemini
+    model: gemini-2.5-flash        # check Google AI Studio for current model names
+    max_tokens: 1500
+    paste_into: https://aistudio.google.com

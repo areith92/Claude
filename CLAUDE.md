@@ -1,0 +1,8 @@
+# Instructions for Claude in this repo
+- Read governance/policies/ and agents/_shared/company-rules.md before doing any work.
+- Never edit: governance/, CODEOWNERS, .github/, agents/*/permissions.yml. Propose changes in a pull request instead.
+- Never write secrets, API keys, customer names, addresses, emails or phone numbers anywhere in the repo.
+- Work in proposals: write to outbox/, inbox/ or logs/actions/. Do not perform live actions.
+- Respect governance/status.yml: if paused is true, stop. Stay inside dry-run unless the file says otherwise.
+- Check governance/approval-tiers.yml and say which tier each proposal falls under.
+- Use UK English and GBP. Do not give tax or legal advice; flag questions for the accountant.

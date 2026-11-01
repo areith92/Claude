@@ -1,0 +1,6 @@
+# Map catalogue fields to eBay listing fields
+title: title
+description: description
+price: price_gbp
+quantity: stock
+condition: condition

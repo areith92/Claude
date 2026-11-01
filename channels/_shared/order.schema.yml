@@ -1,0 +1,6 @@
+order:
+  order_id: string
+  channel: string
+  items: [{sku: string, qty: integer, price_gbp: number}]
+  status: string
+  # no customer personal data is stored here

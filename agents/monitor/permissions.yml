@@ -1,0 +1,5 @@
+agent: monitor
+can_read: [catalogue/, governance/policies/, memory/brain/, logs/, reports/]
+can_propose: [outbox/, logs/actions/]
+cannot: [governance/, agents/, CODEOWNERS, .github/, secrets, customer personal data]
+execute_live_actions: false

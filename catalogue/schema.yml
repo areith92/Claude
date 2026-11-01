@@ -1,0 +1,14 @@
+product:
+  sku: string
+  title: string
+  description: string
+  brand: string
+  condition: new|used|refurbished
+  cost_gbp: number
+  price_gbp: number
+  stock: integer
+  weight_g: integer
+  category: string
+  supplier: string
+  images: [string]
+  channel_overrides: {ebay-uk: {}, shopify: {}}
