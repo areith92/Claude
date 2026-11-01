@@ -1,0 +1,408 @@
+"use strict";
+(function () {
+  const D = window.DASHBOARD;
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const state = { filter: "all" };
+
+  function add(e, kids) {
+    kids.flat(3).forEach(function (k) {
+      if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+    });
+    return e;
+  }
+  function h(tag, attrs) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(function (kv) {
+      if (kv[0] === "class") e.className = kv[1];
+      else if (kv[0].indexOf("on") === 0) e.addEventListener(kv[0].slice(2), kv[1]);
+      else if (kv[1] != null && kv[1] !== false) e.setAttribute(kv[0], kv[1]);
+    });
+    return add(e, [].slice.call(arguments, 2));
+  }
+  function sv(tag, attrs) {
+    const e = document.createElementNS(SVGNS, tag);
+    Object.entries(attrs || {}).forEach(function (kv) {
+      if (kv[0].indexOf("on") === 0) e.addEventListener(kv[0].slice(2), kv[1]);
+      else if (kv[1] != null && kv[1] !== false) e.setAttribute(kv[0], kv[1]);
+    });
+    return add(e, [].slice.call(arguments, 2));
+  }
+
+  const gbp = function (n) { return "£" + Number(n || 0).toFixed(2); };
+  const deptById = function (id) {
+    return (D.departments || []).find(function (d) { return d.id === id; }) ||
+      { id: id, label: id, color: "#8899aa", agents: [], tools: [] };
+  };
+  const agentByName = function (n) { return (D.agents || []).find(function (a) { return a.name === n; }); };
+  const agentColor = function (a) { return a.dept === "conductor" ? "#5ad1ff" : deptById(a.dept).color; };
+  const plural = function (n, w) { return n + " " + w + (n === 1 ? "" : "s"); };
+  const pill = function (t, c) { return h("span", { class: "pill " + (c || "") }, t); };
+  const chip = function (t, c) { return h("span", { class: "chip " + (c || "") }, t); };
+  const tierLabel = { auto: "auto tier", needs_approval: "owner approval", needs_owner_and_accountant: "owner + accountant" };
+  const tierCls = { auto: "ok", needs_approval: "warn", needs_owner_and_accountant: "bad" };
+
+  function copyBtn(text, label) {
+    const base = label || "Copy command";
+    const b = h("button", { class: "copy", type: "button", title: text }, base);
+    b.addEventListener("click", function () {
+      const say = function (m) { b.textContent = m; setTimeout(function () { b.textContent = base; }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { say("Copied"); }, function () { say("Copy failed"); });
+      else say("Copy failed");
+    });
+    return b;
+  }
+  function stat(label, value, sub, cls) {
+    return h("div", { class: "stat " + (cls || "") }, h("span", { class: "k" }, label), h("b", null, value),
+      sub ? h("span", { class: "sub" }, sub) : null);
+  }
+  function head(kicker, title, right) {
+    return h("header", { class: "phead" },
+      h("div", null, h("div", { class: "kicker" }, "// " + kicker), h("h1", null, title, h("span", { class: "cursor" }))), right || null);
+  }
+  function panel(title) {
+    return add(h("section", { class: "panel" }, title ? h("div", { class: "ptitle" }, title) : null), [].slice.call(arguments, 1));
+  }
+  function table(cols, rows, onRow, emptyText) {
+    if (!rows.length) return h("div", { class: "empty" }, emptyText || "Nothing yet.");
+    const tb = h("tbody", null);
+    rows.forEach(function (r) {
+      const tr = h("tr", onRow ? { class: "click" } : null, r.cells.map(function (c) { return h("td", null, c); }));
+      if (onRow) tr.addEventListener("click", function () { onRow(r.data); });
+      tb.append(tr);
+    });
+    return h("div", { class: "wrap" }, h("table", null, h("thead", null, h("tr", null, cols.map(function (c) { return h("th", null, c); }))), tb));
+  }
+  function bar(spent, cap) {
+    const p = cap > 0 ? Math.min(spent / cap * 100, 100) : 0;
+    const cls = p >= 100 ? "bad" : p >= 80 ? "warn" : "";
+    const i = h("i", null);
+    i.style.width = p + "%";
+    return h("div", { class: "bar " + cls }, i);
+  }
+
+  /* ---------- drawer ---------- */
+  function closeDrawer() { document.getElementById("drawer-root").replaceChildren(); }
+  function section(title, body) { return h("div", { class: "dsec" }, h("div", { class: "ptitle" }, title), body); }
+  function drawer(kicker, title, kids) {
+    const root = document.getElementById("drawer-root");
+    root.replaceChildren(
+      h("div", { class: "shade", onclick: closeDrawer }),
+      add(h("aside", { class: "drawer", role: "dialog", "aria-label": title },
+        h("div", { class: "dtop" }, h("span", null, kicker), h("button", { class: "btn", type: "button", onclick: closeDrawer }, "Close")),
+        h("h3", null, title)), kids));
+  }
+  function ladder() {
+    const rows = [["HUMAN-LED", "You do it by hand. No agent involved.", false],
+      ["HUMAN-ASSISTED", "The agent drafts. You approve and carry it out. This is how every task works today.", true],
+      ["FULLY AUTONOMOUS", "The agent acts alone. Not available: live actions are off until Phase 3.", false]];
+    return h("div", { class: "ladder" }, rows.map(function (r) { return h("div", { class: r[2] ? "on" : "" }, h("b", null, r[0]), h("span", null, r[1])); }));
+  }
+  function humanText(t) {
+    if (t.status === "replied") return "Read the reply, then record your decision with the decide command (see Tasks).";
+    if (t.status === "delegated") return "Paste the prepared prompt into the AI it names, then save the reply in inbox/ with the same file name.";
+    if (t.status === "approved") return "Carry it out by hand, then mark it complete.";
+    if (t.status === "blocked") return t.note || "Blocked. Check the note.";
+    return "No action needed.";
+  }
+  function taskDrawer(t) {
+    const a = agentByName(t.agent);
+    const tier = t.tier_effective || t.tier;
+    const needs = { auto: "No approval needed for the draft.", needs_approval: "The owner must approve before anything is done.",
+      needs_owner_and_accountant: "Needs the owner and the accountant to approve." }[tier];
+    drawer(t.id, t.objective, [
+      h("div", { class: "badges" }, pill(tierLabel[tier] || tier, tierCls[tier]), pill("draft only", "mut"), pill(t.status)),
+      t.why ? h("p", null, t.why) : null,
+      section("BUILDS ON", h("div", { class: "chips" }, chip(t.agent + " agent"), a ? chip(a.model) : null)),
+      section("WHAT IT NEEDS", h("p", null, needs || "")),
+      t.flags && t.flags.length ? section("FLAGS", h("div", { class: "chips" }, t.flags.map(function (f) { return chip(f, "bad"); }))) : null,
+      t.reply_file || t.prompt_file ? section("FILE", h("p", { class: "mono" }, t.reply_file || t.prompt_file)) : null,
+      section("THE LADDER", ladder()),
+      section("THE HUMAN", h("p", null, humanText(t)))]);
+  }
+  function agentDrawer(a) {
+    const tasks = D.tasks.filter(function (t) { return t.agent === a.name; });
+    const d = a.dept === "conductor" ? { label: "Conductor", color: "#5ad1ff" } : deptById(a.dept);
+    drawer(d.label.toUpperCase(), a.name, [
+      h("div", { class: "badges" }, pill(a.enabled ? "enabled" : "disabled", a.enabled ? "ok" : "mut"), pill(a.mode + " mode"), pill(a.dry_run ? "draft only" : "live", a.dry_run ? "mut" : "bad")),
+      h("p", null, a.role || "No role text found in agents/" + a.name + "/prompt.md."),
+      section("MODEL", h("div", { class: "chips" }, chip(a.model), chip(a.provider))),
+      section("AI SPEND THIS MONTH", h("div", null, h("div", null, gbp(a.spent_gbp) + " of " + gbp(a.cap_gbp) + " cap"), bar(a.spent_gbp, a.cap_gbp))),
+      section("TASKS", tasks.length ? h("div", { class: "chips" }, tasks.map(function (t) { return chip(t.id + " · " + t.status); })) : h("p", { class: "empty" }, "No tasks queued.")),
+      section("LIMITS", h("p", null, "Proposes only. Cannot change governance, permissions or workflows. No customer personal data."))]);
+  }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
+
+  /* ---------- shared blocks ---------- */
+  function banner() {
+    const s = D.spend;
+    const label = { ok: "AI spend is within budget", warning: "AI spend warning: nearing the monthly cap",
+      stopped: "AI spend STOPPED: monthly cap reached", off: "Paid AI use is switched off" }[s.state] || s.state;
+    return [h("div", { class: "banner " + s.state }, h("b", null, label), h("span", null, gbp(s.spent_gbp) + " of £" + s.cap_gbp + " · " + D.month)),
+      D.mode.paused ? h("div", { class: "banner stopped" }, h("b", null, "ALL AGENTS PAUSED (kill switch)")) : null];
+  }
+  function decisions() {
+    const items = D.approvals.map(function (a) {
+      return h("div", { class: "decision" },
+        h("div", { class: "top" }, h("b", null, a.id), pill(tierLabel[a.tier] || a.tier, tierCls[a.tier]), chip(a.agent), a.flags.map(function (f) { return chip(f, "bad"); })),
+        h("div", null, a.objective), a.reply_file ? h("div", { class: "mono" }, a.reply_file) : null,
+        copyBtn(a.approve, "Copy approve"), copyBtn(a.reject, "Copy reject"), copyBtn(a.defer, "Copy defer"));
+    });
+    return panel("NEEDS YOUR DECISION", items.length ? items : [h("div", { class: "empty" }, "Nothing waiting."),
+      copyBtn('python3 scripts/orchestrate.py plan --goal "Draft the first three listings"', "Copy: plan some work")]);
+  }
+  function callsTable() {
+    return table(["Date", "Agent", "Model", "Tokens", "Cost"], D.recent_costs.map(function (r) {
+      return { cells: [r.date, r.agent, r.model, r.tokens, gbp(r.cost_gbp)] };
+    }), null, "No AI calls logged yet.");
+  }
+
+  /* ---------- pages ---------- */
+  function home() {
+    const s = D.spend;
+    const on = D.agents.filter(function (a) { return a.enabled; }).length;
+    const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
+    const q = Object.entries(D.queue).map(function (kv) { return kv[0] + " " + kv[1]; }).join(" · ");
+    return [head("overview", "COMMERCE OS"), banner(),
+      h("div", { class: "grid stats" },
+        stat("AI SPEND · MTD", gbp(s.spent_gbp), "of £" + s.cap_gbp + " cap", s.state === "stopped" ? "bad" : s.state === "warning" ? "warn" : ""),
+        stat("NEEDS YOUR DECISION", String(D.approvals.length), D.approvals.length ? "see Tasks" : "all clear", D.approvals.length ? "warn" : ""),
+        stat("TASKS", String(D.tasks.length), q || "none yet"),
+        stat("AGENTS", on + "/" + D.agents.length, live + " on the API"),
+        stat("MODE", D.mode.provider || "manual", D.mode.dry_run_default ? "draft only · no live actions" : "live actions on")),
+      h("div", { class: "cols" }, decisions(),
+        panel("DEPARTMENTS", h("div", { class: "deptchips" }, D.departments.map(function (d) {
+          return h("a", { class: "deptchip", href: "#core/" + d.id, style: "--c:" + d.color }, h("i"), h("div", null, d.label, h("small", null, plural(d.agents.length, "agent"))));
+        })))),
+      panel("RECENT AI CALLS", callsTable()),
+      D.latest_digest ? panel("LATEST DIGEST", h("p", { class: "mono" }, "reports/digests/" + D.latest_digest)) : null];
+  }
+  function tasksPage() {
+    return [head("work queue", "TASKS"), decisions(),
+      panel("ALL TASKS", table(["ID", "Agent", "Task", "Tier", "Status"], D.tasks.map(function (t) {
+        const tier = t.tier_effective || t.tier;
+        return { data: t, cells: [t.id, t.agent, t.objective, pill(tierLabel[tier] || tier, tierCls[tier]), pill(t.status)] };
+      }), taskDrawer, "No tasks yet. Use the plan command on the Home page."))];
+  }
+  function agentsPage() {
+    return [head("workforce", "AGENTS"), h("div", { class: "agentgrid" }, D.agents.map(function (a) {
+      return h("button", { class: "acard", type: "button", style: "--c:" + agentColor(a), onclick: function () { agentDrawer(a); } },
+        h("b", null, h("span", { class: a.enabled ? "dot" : "dot off" }), a.name), h("p", null, a.role),
+        h("div", { class: "chips" }, chip(a.model), chip(a.mode), a.enabled ? null : chip("disabled")),
+        bar(a.spent_gbp, a.cap_gbp), h("small", null, gbp(a.spent_gbp) + " of " + gbp(a.cap_gbp)));
+    }))];
+  }
+  function orgPage() {
+    const c = agentByName(D.conductor);
+    const card = function (a) {
+      return h("button", { class: "mini", type: "button", onclick: function () { agentDrawer(a); } },
+        h("span", { class: a.enabled ? "dot" : "dot off" }), a.name, h("small", null, a.model + " · " + a.mode));
+    };
+    return [head("agent hierarchy", "ORG CHART"), h("div", { class: "org" },
+      h("div", { class: "node" }, h("b", null, "You"), h("span", { class: "empty" }, "OWNER · approves everything")),
+      h("div", { class: "vline" }),
+      h("div", { class: "orgrow" }, h("div", { class: "sidecard" }, "KNOWLEDGE CORE", h("br"), D.brain.count + " notes in memory/brain"),
+        h("div", { class: "node conductor", onclick: function () { if (c) agentDrawer(c); } }, h("span", { class: "kicker" }, "CONDUCTOR · SUPER AGENT"),
+          h("b", null, D.conductor), c ? h("div", { class: "chips" }, chip(c.model), chip(c.mode + " mode")) : null,
+          h("span", { class: "empty" }, "plan · delegate · review · digest")),
+        h("div", { class: "sidecard" }, "DIGEST FEED", h("br"), D.latest_digest || "no digest yet")),
+      h("div", { class: "vline" }),
+      h("div", { class: "deptrow" }, D.departments.map(function (d) {
+        return h("div", { class: "dcol", style: "--c:" + d.color }, h("div", { class: "dhead" }, d.label, h("span", null, plural(d.agents.length, "agent"))),
+          d.agents.map(agentByName).filter(Boolean).map(card), h("div", { class: "chips" }, d.tools.map(function (t) { return chip(t); })));
+      })))];
+  }
+
+  /* ---------- knowledge core ---------- */
+  function seeded(seed) { let x = seed; return function () { x = (x * 16807) % 2147483647; return x / 2147483647; }; }
+  function brainCloud(cx, cy, r, count, seed) {
+    const g = sv("g", { class: "cloud" }), rnd = seeded(seed), pts = [];
+    for (let i = 0; i < count; i++) {
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (r - 6);
+      pts.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d]);
+    }
+    pts.forEach(function (p, i) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = p[0] - pts[j][0], dy = p[1] - pts[j][1];
+        if (dx * dx + dy * dy < 484 && (i + j) % 3 === 0) g.append(sv("line", { x1: p[0], y1: p[1], x2: pts[j][0], y2: pts[j][1], class: "cl" }));
+      }
+    });
+    pts.forEach(function (p, i) {
+      g.append(sv("circle", { cx: p[0], cy: p[1], r: i % 9 === 0 ? 2.6 : 1.5, class: "cp", style: "animation-delay:" + ((i % 12) * 0.25) + "s" }));
+    });
+    g.append(sv("circle", { cx: cx, cy: cy, r: r, class: "brain" }));
+    return g;
+  }
+  function people(x, y) {
+    return sv("g", { class: "ic", transform: "translate(" + x + "," + y + ")" },
+      sv("circle", { cx: -5, cy: -4, r: 3.5 }), sv("circle", { cx: 5, cy: -4, r: 3.5 }),
+      sv("path", { d: "M-11 8 Q-5 0 0 6 Q5 0 11 8" }));
+  }
+  function radial(filter) {
+    const cx = 430, cy = 430, n = D.departments.length;
+    const svg = sv("svg", { viewBox: "40 40 780 780", class: "graph", role: "img", "aria-label": "Map of departments, agents and tools" });
+    [150, 250, 370].forEach(function (r) { svg.append(sv("circle", { cx: cx, cy: cy, r: r, class: "ring" })); });
+    svg.append(brainCloud(cx, cy, 84, 150, 7));
+    const pos = function (r, a) { return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+    D.departments.forEach(function (d, i) {
+      const ang = -Math.PI / 2 + i * 2 * Math.PI / n, dp = pos(150, ang);
+      const g = sv("g", { class: "dept" + (filter !== "all" && filter !== d.id ? " dim" : ""), style: "--c:" + d.color });
+      g.append(sv("line", { x1: cx, y1: cy, x2: dp[0], y2: dp[1], class: "spoke" }));
+      d.agents.forEach(function (name, k) {
+        const a = agentByName(name), aa = ang + (k - (d.agents.length - 1) / 2) * 0.2, ap = pos(250, aa), lp = pos(276, aa);
+        g.append(sv("line", { x1: dp[0], y1: dp[1], x2: ap[0], y2: ap[1], class: "link" }));
+        g.append(sv("g", { class: "agent" + (a && a.enabled ? "" : " off"), onclick: function (e) { e.stopPropagation(); if (a) agentDrawer(a); } },
+          sv("circle", { cx: ap[0], cy: ap[1], r: 14 }), sv("text", { x: ap[0], y: ap[1] + 4, "text-anchor": "middle", class: "ico" }, "A"), sv("title", null, name)));
+        g.append(sv("text", { x: lp[0], y: lp[1] + 3, "text-anchor": Math.cos(aa) >= 0 ? "start" : "end", class: "lbl" }, name));
+      });
+      d.tools.forEach(function (name, k) {
+        const tp = pos(370, ang + (k - (d.tools.length - 1) / 2) * 0.16);
+        g.append(sv("circle", { cx: tp[0], cy: tp[1], r: 7, class: "tool" }, sv("title", null, name)));
+      });
+      const dn = sv("g", { class: "dn", onclick: function () { location.hash = "#core/" + d.id; } },
+        sv("circle", { cx: dp[0], cy: dp[1], r: 24 }), people(dp[0], dp[1]), sv("title", null, "Open " + d.label));
+      g.append(dn, sv("text", { x: dp[0], y: dp[1] + 42, class: "dlabel" }, d.label));
+      svg.append(g);
+    });
+    return svg;
+  }
+  function drill(d) {
+    const W = 900, H = 640, ags = d.agents.map(agentByName).filter(Boolean), m = ags.length;
+    const svg = sv("svg", { viewBox: "0 0 " + W + " " + H, class: "graph", style: "--c:" + d.color, role: "img", "aria-label": d.label + " department" });
+    svg.append(sv("text", { x: W / 2, y: 36, "text-anchor": "middle", class: "gtitle", fill: d.color }, d.label.toUpperCase()));
+    const xs = ags.map(function (_, i) { return m === 1 ? W / 2 : 140 + i * (W - 280) / (m - 1); });
+    const tx = d.tools.map(function (_, i) { return d.tools.length === 1 ? W / 2 : 150 + i * (W - 300) / (d.tools.length - 1); });
+    const dept = [W / 2, 575];
+    xs.forEach(function (x) { tx.forEach(function (t) { svg.append(sv("line", { x1: x, y1: 200, x2: t, y2: 100, class: "faint" })); }); });
+    d.tools.forEach(function (name, i) {
+      svg.append(sv("circle", { cx: tx[i], cy: 100, r: 9, class: "tool" }), sv("text", { x: tx[i], y: 82, class: "gsmall" }, name));
+    });
+    let any = false;
+    ags.forEach(function (a, i) {
+      svg.append(sv("g", { class: "agent" + (a.enabled ? "" : " off"), style: "--c:" + d.color, onclick: function () { agentDrawer(a); } },
+        sv("circle", { cx: xs[i], cy: 200, r: 20 }), sv("text", { x: xs[i], y: 205, "text-anchor": "middle", class: "ico" }, "A")));
+      svg.append(sv("text", { x: xs[i], y: 242, class: "gsmall" }, a.name), sv("text", { x: xs[i], y: 256, class: "gsmall" }, a.model));
+      D.tasks.filter(function (t) { return t.agent === a.name; }).slice(0, 3).forEach(function (t, j) {
+        any = true;
+        const y = 310 + j * 52, label = t.objective.length > 28 ? t.objective.slice(0, 27) + "…" : t.objective;
+        svg.append(sv("line", { x1: xs[i], y1: j ? y - 52 + 8 : 220, x2: xs[i], y2: y - 8, stroke: "#cfe3ff", "stroke-opacity": ".5" }),
+          sv("line", { x1: xs[i], y1: y + 8, x2: dept[0], y2: dept[1] - 28, class: "gdash" }),
+          sv("g", { class: "agent tnode", onclick: function () { taskDrawer(t); } }, sv("rect", { x: xs[i] - 7, y: y - 7, width: 14, height: 14, rx: 3, fill: "#0a1222", stroke: d.color }),
+            sv("title", null, t.objective)),
+          sv("text", { x: xs[i], y: y + 24, class: "gsmall" }, label));
+      });
+    });
+    if (!any) svg.append(sv("text", { x: W / 2, y: 380, class: "gsmall" }, "No tasks queued for this department yet."));
+    svg.append(sv("g", { class: "dept" }, sv("g", { class: "dn" }, sv("circle", { cx: dept[0], cy: dept[1], r: 28 }), people(dept[0], dept[1]))),
+      sv("text", { x: dept[0], y: dept[1] + 48, class: "dlabel", fill: d.color }, d.label));
+    return svg;
+  }
+  function corePage(arg) {
+    const d = arg && D.departments.find(function (x) { return x.id === arg; });
+    const f = state.filter;
+    const sel = h("select", { "aria-label": "Department filter", onchange: function (e) { state.filter = e.target.value; render(); } },
+      h("option", { value: "all" }, "Department · all"),
+      D.departments.map(function (x) { return h("option", { value: x.id, selected: f === x.id ? "selected" : null }, x.label); }));
+    const tools = D.departments.reduce(function (n, x) { return n + x.tools.length; }, 0);
+    const legend = [["#ff6b81", "Brain notes", D.brain.count], ["#5ad1ff", "Departments", D.departments.length], ["#cfe3ff", "AI agents", D.agents.length],
+      ["#ff4d6d", "Tools", tools], ["#fbbf24", "Tasks", D.tasks.length]];
+    return [head("knowledge core", d ? d.label.toUpperCase() : "COMMERCE ENGINE",
+        h("div", { class: "infobox" }, D.brain.count + " notes in memory/brain · markdown · add notes by pull request")),
+      h("div", { class: "tabs" }, h("span", { class: "tab on" }, "Radial"), d ? h("a", { class: "btn", href: "#core" }, "← Back") : null),
+      h("div", { class: "cols graphcols" }, h("div", { class: "graphbox" }, d ? drill(d) : radial(f)),
+        h("div", null, panel("FILTER", sel),
+          panel("LEGEND", h("div", { class: "legend" }, legend.map(function (l) {
+            return h("div", { style: "--c:" + l[0] }, h("i", { class: "sw" }), l[1], h("span", null, String(l[2])));
+          }))),
+          panel("DIRECTORY", h("div", { class: "dir" }, D.agents.map(function (a) {
+            return h("button", { type: "button", style: "--c:" + agentColor(a), onclick: function () { agentDrawer(a); } },
+              h("i", { class: "sw" }), a.name, h("small", null, a.dept === "conductor" ? "conductor" : deptById(a.dept).label));
+          })))))];
+  }
+
+  /* ---------- finances, health, connections, roadmap ---------- */
+  function donut(items, total) {
+    const colors = ["#5ad1ff", "#ff4d6d", "#34d399", "#fbbf24", "#a78bfa", "#22d3ee", "#fb923c", "#e879f9"];
+    const r = 70, C = 2 * Math.PI * r;
+    let off = 0;
+    const svg = sv("svg", { viewBox: "0 0 200 200", class: "donut", role: "img", "aria-label": "AI spend by agent" }, sv("circle", { cx: 100, cy: 100, r: r, class: "dbg" }));
+    items.forEach(function (it, i) {
+      const len = total > 0 ? C * it.spent_gbp / total : 0;
+      svg.append(sv("circle", { cx: 100, cy: 100, r: r, class: "dseg", stroke: colors[i % colors.length], "stroke-dasharray": len + " " + (C - len), "stroke-dashoffset": -off, transform: "rotate(-90 100 100)" }));
+      off += len;
+    });
+    svg.append(sv("text", { x: 100, y: 102, "text-anchor": "middle", class: "dnum" }, gbp(total)), sv("text", { x: 100, y: 120, "text-anchor": "middle", class: "dsub" }, "this month"));
+    return [svg, colors];
+  }
+  function financesPage() {
+    const s = D.spend, items = D.per_agent.filter(function (a) { return a.spent_gbp > 0; });
+    const dn = donut(items, s.spent_gbp), ebay = D.connections.find(function (c) { return c.id === "ebay"; });
+    const colorFor = function (name) { const i = items.findIndex(function (x) { return x.agent === name; }); return i < 0 ? "#44546f" : dn[1][i % dn[1].length]; };
+    return [head("every cost, one view", "FINANCES"), banner(),
+      h("div", { class: "grid stats" },
+        stat("AI SPEND · MTD", gbp(s.spent_gbp), s.percent + "% of cap", s.state === "stopped" ? "bad" : s.state === "warning" ? "warn" : ""),
+        stat("CAP REMAINING", gbp(s.remaining_gbp), "of £" + s.cap_gbp),
+        stat("INCOME · MTD", "—", "awaiting eBay API (Phase 2)"), stat("NET", "—", "needs income data")),
+      panel("AI SPEND BY AGENT · " + D.month, h("div", { class: "donutwrap" }, dn[0],
+        h("div", { style: "flex:1;min-width:260px" }, D.per_agent.length ? D.per_agent.map(function (a, i) {
+          return h("div", { class: "brow" }, h("span", null, h("i", { class: "sw", style: "--c:" + colorFor(a.agent) + ";margin-right:8px;display:inline-block;vertical-align:-2px" }), a.agent), bar(a.spent_gbp, a.cap_gbp), h("span", null, gbp(a.spent_gbp) + " / " + gbp(a.cap_gbp)));
+        }) : h("div", { class: "empty" }, "No agent has a spend cap above zero."))),
+        h("p", { class: "empty" }, "Costs are estimates from token counts and the prices in models/costs.yml. Gemini is on the free tier and is not counted.")),
+      panel("INCOME · BY CHANNEL", h("div", { class: "cards" }, [
+        h("div", { class: "decision" }, h("b", null, "eBay UK"), h("div", { class: "empty" }, ebay ? ebay.status : "manual mode"), pill("not connected", "mut")),
+        h("div", { class: "decision" }, h("b", null, "Shopify"), h("div", { class: "empty" }, "Reserved for Phase 4"), pill("not enabled", "mut"))]))];
+  }
+  function healthPage() {
+    const s = D.spend, allDry = D.agents.every(function (a) { return a.dry_run; });
+    const checks = [
+      [D.mode.paused ? "bad" : "ok", "Kill switch", D.mode.paused ? "PAUSED: no agent will run" : "Running. Use the Kill switch workflow to stop everything."],
+      [s.state === "ok" ? "ok" : s.state === "off" ? "warn" : "bad", "Budget guard", "State: " + s.state + ". Calls that could pass a cap are never sent."],
+      [allDry ? "ok" : "warn", "Draft only", allDry ? "Every agent is in dry-run mode." : "Some agents are not in dry-run mode."],
+      ["ok", "Personal-data guard", "run_agent.py refuses prompts that look like they contain personal data."],
+      [D.approvals.length ? "warn" : "ok", "Decisions waiting", D.approvals.length + " task(s) need your decision."],
+      [D.latest_digest ? "ok" : "warn", "Owner digest", D.latest_digest || "No digest yet. Run the digest command."]];
+    return [head("system checks", "HEALTH"), panel(null, checks.map(function (c) {
+      return h("div", { class: "check" }, h("span", { class: c[0] === "ok" ? "dot" : "dot off", style: c[0] === "ok" ? null : "background:" + (c[0] === "bad" ? "#ff4d6d" : "#fbbf24") }),
+        h("div", null, h("b", null, c[1]), h("small", null, c[2])));
+    }))];
+  }
+  function connectionsPage() {
+    return [head("plumbing", "CONNECTIONS"), h("div", { class: "cards" }, D.connections.map(function (c) {
+      return h("div", { class: "panel" }, h("div", { class: "ptitle" }, c.name.toUpperCase()), pill(c.status, /in use|enabled/.test(c.status) ? "ok" : "mut"), h("p", null, c.detail));
+    }))];
+  }
+  function roadmapPage() {
+    return [head("autonomy ladder", "ROADMAP"), D.phases.list.map(function (p) {
+      return h("div", { class: "phase" + (p.n === D.phases.current ? " now" : "") }, h("div", { class: "n" }, String(p.n)),
+        h("div", null, h("b", null, p.name), " ", pill(p.n === D.phases.current ? "now" : "later", p.n === D.phases.current ? "ok" : "mut"), h("p", { class: "empty" }, p.text)));
+    })];
+  }
+
+  /* ---------- shell ---------- */
+  const NAV = [["OPERATE", [["home", "Home"], ["tasks", "Tasks"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
+    ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["connections", "Connections"], ["roadmap", "Roadmap"]]]];
+  const PAGES = { home: home, tasks: tasksPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
+
+  function side(active) {
+    const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
+    const nav = h("nav", { class: "nav" });
+    NAV.forEach(function (g) {
+      nav.append(h("div", { class: "navh" }, g[0]));
+      g[1].forEach(function (p) { nav.append(h("a", { href: "#" + p[0], class: p[0] === active ? "on" : "" }, p[1])); });
+    });
+    document.getElementById("side").replaceChildren(
+      h("div", { class: "logo" }, h("i"), h("div", null, h("b", null, "COMMERCE OS"), h("span", null, "V1 · OPERATOR MODE"))), nav,
+      h("div", { class: "sidefoot" }, h("div", null, h("span", { class: live ? "dot" : "dot off" }), live + "/" + D.agents.length + " agents on the API"),
+        h("div", null, "static page · reads status.js")));
+  }
+  function render() {
+    const view = document.getElementById("view");
+    if (!D) { view.textContent = "No data yet. Run: python3 scripts/build_dashboard.py"; return; }
+    const parts = (location.hash.slice(1) || "home").split("/"), page = PAGES[parts[0]] ? parts[0] : "home";
+    view.replaceChildren();
+    add(view, [PAGES[page](parts[1])]);
+    side(page);
+    closeDrawer();
+  }
+  window.addEventListener("hashchange", render);
+  render();
+})();

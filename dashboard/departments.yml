@@ -1,0 +1,10 @@
+# Dashboard layout. Which agents sit in which department, plus each department's colour and tools.
+# Every agent in governance/status.yml must appear once here (the tests check this).
+conductor: orchestrator
+departments:
+  sales:      {label: Sales,         color: "#ff4d6d", agents: [listings, pricing],          tools: [eBay UK listings, Catalogue]}
+  operations: {label: Operations,    color: "#22d3ee", agents: [orders, inventory, returns], tools: [eBay UK orders, Stock sheet]}
+  customer:   {label: Customer care, color: "#3b82f6", agents: [messages],                   tools: [eBay messages]}
+  finance:    {label: Finance,       color: "#34d399", agents: [finance, analytics],         tools: [Cost log, Accountant pack]}
+  compliance: {label: Compliance,    color: "#a78bfa", agents: [compliance, reviewer],       tools: [Policies, Approval tiers]}
+  monitoring: {label: Monitoring,    color: "#fbbf24", agents: [monitor],                    tools: [Budget guard, Kill switch]}
