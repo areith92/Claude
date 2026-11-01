@@ -235,9 +235,9 @@
   /* ---------- knowledge core ---------- */
   function seeded(seed) { let x = seed; return function () { x = (x * 16807) % 2147483647; return x / 2147483647; }; }
   function brainCloud(cx, cy, r, count, seed) {
-    const g = sv("g", { class: "cloud" }), rnd = seeded(seed), R = r - 6, LINK = 22, MAXL = 340, pts = [], lines = [];
+    const g = sv("g", { class: "cloud" }), rnd = seeded(seed), R = r - 6, LINK = 22, MAXL = 340, SPEED = 2.5, pts = [], lines = [];
     for (let i = 0; i < count; i++) {
-      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * R, s = 8 + rnd() * 12, t = rnd() * Math.PI * 2;
+      const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * R, s = (8 + rnd() * 12) * SPEED, t = rnd() * Math.PI * 2;
       pts.push({ x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, vx: Math.cos(t) * s, vy: Math.sin(t) * s });
     }
     for (let i = 0; i < MAXL; i++) { const l = sv("line", { class: "cl", visibility: "hidden" }); lines.push(l); g.append(l); }
@@ -248,9 +248,9 @@
     g.append(sv("circle", { cx: cx, cy: cy, r: r, class: "brain" }));
     function frame(dt) {
       pts.forEach(function (p) {
-        p.vx += (Math.random() - 0.5) * 70 * dt;
-        p.vy += (Math.random() - 0.5) * 70 * dt;
-        const sp = Math.hypot(p.vx, p.vy) || 1, k = Math.min(Math.max(sp, 8), 22) / sp;
+        p.vx += (Math.random() - 0.5) * 70 * SPEED * dt;
+        p.vy += (Math.random() - 0.5) * 70 * SPEED * dt;
+        const sp = Math.hypot(p.vx, p.vy) || 1, k = Math.min(Math.max(sp, 8 * SPEED), 22 * SPEED) / sp;
         p.vx *= k; p.vy *= k;
         p.x += p.vx * dt; p.y += p.vy * dt;
         const dx = p.x - cx, dy = p.y - cy, dist = Math.hypot(dx, dy);
@@ -281,7 +281,7 @@
     let last = 0;
     const tick = function (ts) {
       if (!g.isConnected) return;
-      if (motion.on && ts - last >= 33) { frame(Math.min((ts - last) / 1000, 0.1)); last = ts; }
+      if (motion.on && ts - last >= 16) { frame(Math.min((ts - last) / 1000, 0.1)); last = ts; }
       else if (!motion.on) last = ts;
       requestAnimationFrame(tick);
     };
