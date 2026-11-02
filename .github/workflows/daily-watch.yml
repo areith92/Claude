@@ -1,0 +1,33 @@
+name: Daily watch
+# Every morning: checks every parcel against its promised delivery time and every supplier price against what you assumed,
+# then opens a GitHub issue that mentions you if anything new needs attention (GitHub emails you about it).
+# It needs your private database: add SUPABASE_URL and SUPABASE_SECRET_KEY under Settings, Secrets and variables, Actions.
+# If they are missing the run FAILS on purpose, so a silent gap in the watch cannot go unnoticed.
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pyyaml
+      - name: Scan parcels and supplier prices
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/watch.py scan --require-supabase --alert-file /tmp/watch.md
+      - name: Open an issue if there is something new
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          [ -s /tmp/watch.md ] || { echo "Nothing new today."; exit 0; }
+          title=$(head -1 /tmp/watch.md | sed 's/^# //')
+          gh label create daily-watch --color D93F0B --force >/dev/null 2>&1 || true
+          printf '\n\n@%s\n' "$OWNER" >> /tmp/watch.md
+          gh issue create --title "$title" --label daily-watch --assignee "$OWNER" --body-file /tmp/watch.md
