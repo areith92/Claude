@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from brain_search import brain_context  # noqa: E402
 from budget_guard import spend_state, would_exceed, worst_case_cost, write_stop_marker  # noqa: E402
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 from pii_guard import find_pii  # noqa: E402
@@ -83,6 +84,7 @@ def main():
     dry = cfg.get("dry_run", status.get("default_dry_run", True))
     prompt = "\n\n".join(x for x in [
         read("agents/_shared/company-rules.md"), read(f"agents/{a.agent}/prompt.md"),
+        brain_context(a.agent, a.task + "\n" + extra),
         read("agents/_shared/output-schema.md"), "## Task\n" + a.task,
         ("## Extra input\n" + extra) if extra else ""] if x.strip())
 

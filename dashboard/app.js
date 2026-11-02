@@ -139,6 +139,17 @@
       section("THE LADDER", ladder()),
       section("THE HUMAN", h("p", null, humanText(t)))]);
   }
+  function sopSection(a) {
+    const s = a.sop;
+    if (!s || !s.exists) {
+      return section("STANDING PROCEDURE (SOP)", h("p", { class: "empty" }, "No SOP found at " + (s ? s.path : "memory/brain/sops/" + a.name + ".md") + "."));
+    }
+    return section("STANDING PROCEDURE (SOP)", h("div", null, h("p", null, s.purpose),
+      h("ol", { class: "sop" }, s.steps.map(function (x) { return h("li", null, x); })),
+      h("p", { class: "empty" }, "Approval: " + s.tier),
+      s.escalate.length ? h("p", { class: "empty" }, "Escalate to the owner: " + s.escalate.join("; ")) : null,
+      h("p", { class: "mono" }, s.path)));
+  }
   function agentDrawer(a) {
     const tasks = D.tasks.filter(function (t) { return t.agent === a.name; });
     const d = a.dept === "conductor" ? { label: "Conductor", color: "#5ad1ff" } : deptById(a.dept);
@@ -148,6 +159,7 @@
       section("MODEL", h("div", { class: "chips" }, chip(a.model), chip(a.provider))),
       section("AI SPEND THIS MONTH", h("div", null, h("div", null, gbp(a.spent_gbp) + " of " + gbp(a.cap_gbp) + " cap"), bar(a.spent_gbp, a.cap_gbp))),
       section("TASKS", tasks.length ? h("div", { class: "chips" }, tasks.map(function (t) { return chip(t.id + " · " + t.status); })) : h("p", { class: "empty" }, "No tasks queued.")),
+      sopSection(a),
       section("LIMITS", h("p", null, "Proposes only. Cannot change governance, permissions or workflows. No customer personal data."))]);
   }
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
@@ -208,7 +220,7 @@
     return [head("workforce", "AGENTS"), h("div", { class: "agentgrid" }, D.agents.map(function (a) {
       return h("button", { class: "acard", type: "button", style: "--c:" + agentColor(a), onclick: function () { agentDrawer(a); } },
         h("b", null, h("span", { class: a.enabled ? "dot" : "dot off" }), a.name), h("p", null, a.role),
-        h("div", { class: "chips" }, chip(a.model), chip(a.mode), a.enabled ? null : chip("disabled")),
+        h("div", { class: "chips" }, chip(a.model), chip(a.mode), a.enabled ? null : chip("disabled"), a.sop && a.sop.exists ? chip("SOP") : chip("no SOP", "bad")),
         bar(a.spent_gbp, a.cap_gbp), h("small", null, gbp(a.spent_gbp) + " of " + gbp(a.cap_gbp)));
     }))];
   }
@@ -363,7 +375,7 @@
     const legend = [["#ff6b81", "Brain notes", D.brain.count], ["#5ad1ff", "Departments", D.departments.length], ["#cfe3ff", "AI agents", D.agents.length],
       ["#ff4d6d", "Tools", tools], ["#fbbf24", "Tasks", D.tasks.length]];
     return [head("knowledge core", d ? d.label.toUpperCase() : "COMMERCE ENGINE",
-        h("div", { class: "infobox" }, D.brain.count + " notes in memory/brain · markdown · add notes by pull request")),
+        h("div", { class: "infobox" }, D.brain.count + " notes in memory/brain (" + D.agents.filter(function (a) { return a.sop && a.sop.exists; }).length + " SOPs) · markdown · add notes by pull request")),
       h("div", { class: "tabs" }, h("span", { class: "tab on" }, "Radial"), d ? h("a", { class: "btn", href: "#core" }, "← Back") : null, motionButton()),
       h("div", { class: "cols graphcols" }, h("div", { class: "graphbox" }, d ? drill(d) : radial(f)),
         h("div", null, panel("FILTER", sel),
@@ -417,7 +429,8 @@
       ["ok", "Personal-data guard", "run_agent.py refuses prompts that look like they contain personal data."],
       [D.approvals.length ? "warn" : "ok", "Decisions waiting", D.approvals.length + " task(s) need your decision."],
       [D.latest_digest ? "ok" : "warn", "Owner digest", D.latest_digest || "No digest yet. Run the digest command."],
-      [openInc().length ? "bad" : "ok", "Tech Support", openInc().length + " open incident(s). Run python3 scripts/techsupport.py detect to check."]];
+      [openInc().length ? "bad" : "ok", "Tech Support", openInc().length + " open incident(s). Run python3 scripts/techsupport.py detect to check."],
+      [D.agents.every(function (a) { return a.sop && a.sop.exists; }) ? "ok" : "warn", "SOPs", D.agents.filter(function (a) { return a.sop && a.sop.exists; }).length + " of " + D.agents.length + " agents have a SOP in memory/brain/sops/."]];
     return [head("system checks", "HEALTH"), panel(null, checks.map(function (c) {
       return h("div", { class: "check" }, h("span", { class: c[0] === "ok" ? "dot" : "dot off", style: c[0] === "ok" ? null : "background:" + (c[0] === "bad" ? "#ff4d6d" : "#fbbf24") }),
         h("div", null, h("b", null, c[1]), h("small", null, c[2])));

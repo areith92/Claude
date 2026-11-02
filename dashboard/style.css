@@ -108,3 +108,4 @@ td,th{padding:7px 8px;border-bottom:1px solid var(--line)}tr.click{cursor:pointe
 .stage.done i{background:var(--ok)}.stage.done{color:#9fb8de}
 .stage.now i{background:var(--warn);box-shadow:0 0 8px var(--warn)}.stage.now{color:#fff}
 pre.evidence{background:#070b14;border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:240px;margin:0}
+ol.sop{padding-left:18px;margin:8px 0}ol.sop li{margin-bottom:5px}

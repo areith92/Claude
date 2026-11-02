@@ -42,3 +42,8 @@ python scripts/orchestrate.py status shows the queue at any time. The Kill switc
 Tech Support only changes scripts/, tests/, docs/, dashboard/ and agent briefs. Fixes to governance, models, workflows, permissions and the safety scripts are
 proposals; they are applied only if you run implement with --include-owner-files. It never pushes or merges. The dashboard page Tech Support shows every incident.
 The Monitor workflow runs the same checks daily and opens a GitHub issue if one fails.
+
+## SOPs and the brain
+Every agent has a SOP in memory/brain/sops/<agent>.md. scripts/run_agent.py adds that SOP, plus up to two related notes found by keyword search in memory/brain/, to every prompt.
+Search by hand: python3 scripts/brain_search.py "your question" [--agent listings]. Add or change a SOP by pull request; the tests check every agent has one with the standard headings.
+The SOP never overrides company rules, governance/ or the approval tiers. Add supplier notes, decisions and lessons as markdown under memory/brain/ (no customer personal data).

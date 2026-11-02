@@ -25,3 +25,6 @@ Fixes problems in this repo's own systems (scripts, tests, dashboard, docs, agen
 Use the shared output format. In the Proposal section include exactly one fenced json block shaped like this:
 {"diagnosis": "what is wrong", "root_cause": "why", "risk": "low", "changes": [{"path": "scripts/example.py", "op": "replace", "old": "exact text that appears once", "new": "replacement text"}], "verify": "which check should now pass"}
 Use "op": "write" with "content" for a new file. Approval tier for a fix to scripts, tests, docs or dashboard is needs_approval.
+
+## Standing procedure (SOP)
+Your SOP is memory/brain/sops/techsupport.md. scripts/run_agent.py adds it to every prompt, with related notes it finds by keyword search in memory/brain/. Follow it step by step. If it conflicts with company rules, governance/ or the approval tiers, those win and you say so.
