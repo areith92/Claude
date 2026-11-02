@@ -11,6 +11,7 @@ ai_costs:                  # 0 means no paid API use is allowed for that agent
     compliance: 1
     reviewer: 0
     monitor: 0
+    techsupport: 1
     pricing: 0
     inventory: 0
     returns: 0

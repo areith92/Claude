@@ -102,3 +102,9 @@ td,th{padding:7px 8px;border-bottom:1px solid var(--line)}tr.click{cursor:pointe
 @media (max-width:900px){.app{flex-direction:column}.side{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap;gap:4px}.sidefoot{display:none}
 .logo{width:100%;margin-bottom:6px}.navh{display:none}.nav{display:contents}.cols,.graphcols{grid-template-columns:1fr}.main{padding:16px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+.stages{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0}
+.stage{flex:1;min-width:70px;text-align:center;font-size:10px;color:var(--mut)}
+.stage i{display:block;height:4px;border-radius:2px;background:#1b2a45;margin-bottom:4px}
+.stage.done i{background:var(--ok)}.stage.done{color:#9fb8de}
+.stage.now i{background:var(--warn);box-shadow:0 0 8px var(--warn)}.stage.now{color:#fff}
+pre.evidence{background:#070b14;border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:240px;margin:0}
