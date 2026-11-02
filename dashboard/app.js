@@ -505,17 +505,130 @@
       }), incidentDrawer, "No incidents. Run the health checks to look for problems."))];
   }
 
+  /* ---------- approvals (needs scripts/dashboard_server.py) ---------- */
+  let RES = null, TOKEN = null;
+  const jget = function (path) { return fetch(path, { cache: "no-store" }).then(function (r) { return r.json(); }); };
+  function badge() {
+    const n = RES ? RES.counts.awaiting_approval : 0, el = document.getElementById("appr-badge");
+    if (el) { el.textContent = n ? String(n) : ""; el.style.display = n ? "inline-block" : "none"; }
+  }
+  function loadResearch() {
+    return jget("/api/research").then(function (j) { RES = j; badge(); return j; }).catch(function () { RES = null; return null; });
+  }
+  function post(path, body) {
+    const tok = TOKEN ? Promise.resolve(TOKEN) : jget("/api/token").then(function (t) { TOKEN = t.token; return TOKEN; });
+    return tok.then(function (t) {
+      return fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Dash-Token": t }, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+    });
+  }
+  const CHECKS = { stock_in_hand: "The stock is in my hands", supplier_agreement: "I have a supplier agreement", brand_authorised: "I may sell this brand",
+    safety_docs_ok: "Safety marking and documents checked", delivery_promise_checked: "The delivery time I will state is one I can meet",
+    pre_contract_info_ok: "Trader, total price and cancellation terms are clear", returns_process_ok: "Returns process decided", ad_claims_checked: "Ad claims checked (CAP Code)",
+    platform_policy_checked: "Platform shop rules checked" };
+  const gbpn = function (n) { return n == null ? "—" : "£" + Number(n).toFixed(2); };
+  function thumb(it) {
+    const img = (it.market.images || []).find(function (i) { return i.url_local; });
+    return img ? h("img", { class: "thumb", src: img.url_local, alt: "" }) : h("div", { class: "thumb none" }, "no image");
+  }
+  function verdictChips(it) {
+    return ["listings", "pricing", "compliance", "finance"].map(function (a) {
+      const v = (it.agent_notes[a] || {}).verdict;
+      return chip(a + ": " + (v || "waiting"), v === "block" ? "bad" : "");
+    });
+  }
+  function productDrawer(it) {
+    const m = it.margin || {}, sup = it.supplier, mk = it.market, flags = (it.policy ? it.policy.results : []).filter(function (r) { return r.status === "flag"; });
+    const blocks = (it.policy ? it.policy.results : []).filter(function (r) { return r.status === "block"; });
+    const reason = h("textarea", { rows: "2", placeholder: "Reason (kept as a lesson if you deny)", class: "filter" });
+    const ack = h("input", { type: "checkbox", id: "ack" });
+    const msg = h("p", { class: "empty" });
+    const decide = function (d) {
+      post("/api/decision", { id: it.id, decision: d, reason: reason.value, acknowledge: ack.checked }).then(function (r) {
+        msg.textContent = r.message;
+        if (r.ok) { loadResearch().then(function () { closeDrawer(); render(); }); }
+      });
+    };
+    const gal = h("div", { class: "gallery" }, (mk.images || []).filter(function (i) { return i.url_local; }).map(function (i) { return h("a", { href: i.url_local, target: "_blank", rel: "noopener" }, h("img", { src: i.url_local, alt: "" })); }));
+    const ln = (it.agent_notes.listings || {}).data || {}, pr = (it.agent_notes.pricing || {}).data || {};
+    const link = function (label, url) { return url ? h("p", null, label + ": ", h("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, url)) : h("p", { class: "empty" }, label + ": none"); };
+    drawer(it.id, it.title, [
+      h("div", { class: "badges" }, pill(it.channel), pill(it.fulfilment_model.replace(/_/g, " ")), pill(it.stage.replace(/_/g, " "), it.stage === "awaiting_approval" ? "warn" : "mut")),
+      gal.children.length ? section("IMAGES (analysis only, rights unverified)", gal) : null,
+      section("LINKS", h("div", null, link("eBay listing", mk.url), link("Supplier (" + sup.platform + ")", sup.url))),
+      section("MARGIN", h("div", null, h("p", null, (m.margin_pct != null ? m.margin_pct + "% margin" : "no margin yet") + " at " + gbpn(it.suggested_price_gbp || mk.price_gbp) +
+        " (if costs rose " + (m.stress_cost_increase_pct || 0) + "%: " + (m.stress_margin_pct != null ? m.stress_margin_pct + "%" : "—") + ")"),
+        h("p", { class: "empty" }, "Item " + gbpn(m.cost_gbp) + ", supplier shipping " + gbpn(m.shipping_gbp) + ", postage " + gbpn(m.postage_gbp) + ", packaging " + gbpn(m.packaging_gbp) +
+          ", fees " + gbpn(m.channel_fees_gbp) + ", returns allowance " + gbpn(m.returns_allowance_gbp) + (m.fees_confirmed ? "" : ". Fee figures are placeholders.")))),
+      section("MARKET AND SUPPLIER", h("p", null, "Sold in 30 days: " + (mk.sold_30d == null ? "—" : mk.sold_30d) + " | Competing listings: " + (mk.active_listings == null ? "—" : mk.active_listings) +
+        " | Supplier delivery up to " + sup.delivery_days_max + " days | Rating " + sup.rating + " | Ships from " + sup.ships_from)),
+      (mk.review_themes || []).length ? section("BAD-REVIEW THEMES", h("div", { class: "chips" }, mk.review_themes.map(function (t) { return chip(t); }))) : null,
+      ln.improved_title ? section("LISTING SUGGESTION", h("div", null, h("p", null, h("b", null, ln.improved_title)), h("p", null, ln.improved_description || ""),
+        h("ul", null, (ln.key_points || []).map(function (k) { return h("li", null, k); })))) : null,
+      pr.suggested_price_gbp ? section("PRICE SUGGESTION", h("p", null, gbpn(pr.suggested_price_gbp) + ". " + (pr.reasoning || ""))) : null,
+      section("COMPLIANCE GATE: " + (it.policy ? it.policy.overall.toUpperCase() : "not run"), h("div", null,
+        blocks.map(function (r) { return h("p", { class: "mono" }, "BLOCK " + r.id + " " + r.title + (r.detail ? " (" + r.detail + ")" : "")); }),
+        flags.map(function (r) { return h("p", { class: "empty" }, "FLAG " + r.id + " " + r.title + (r.detail ? " (" + r.detail + ")" : "")); }),
+        !blocks.length && !flags.length ? h("p", { class: "empty" }, "No flags.") : null)),
+      section("AGENT REVIEWS", h("div", { class: "chips" }, verdictChips(it))),
+      section("YOUR CHECKS", h("div", { class: "checks" }, RES.confirmable.map(function (f) {
+        const box = h("input", { type: "checkbox" });
+        box.checked = !!it[f];
+        box.addEventListener("change", function () { post("/api/confirm", { id: it.id, field: f, value: box.checked }).then(function () { loadResearch(); }); });
+        return h("label", null, box, " " + (CHECKS[f] || f));
+      }))),
+      it.stage === "awaiting_approval" ? section("YOUR DECISION", h("div", null, reason,
+        h("label", null, ack, " I have read the flags above and accept them"),
+        h("div", null, h("button", { class: "btn good", type: "button", onclick: function () { decide("approved"); } }, "Approve"),
+          h("button", { class: "btn badbtn", type: "button", onclick: function () { decide("denied"); } }, "Deny")),
+        h("p", { class: "empty" }, "Approve creates a launch pack and a sample-order checklist. It does not buy or list anything."), msg)) :
+        section("STATUS", h("p", { class: "empty" }, it.reject_reason || (it.history[it.history.length - 1] || {}).note || it.stage))]);
+  }
+  function approvalsBody(j) {
+    if (!j) {
+      return [h("div", { class: "banner stopped" }, h("b", null, "The approval buttons need the dashboard server.")),
+        h("p", { class: "empty" }, "Stop the current server (Ctrl+C) and run this instead. It serves the same dashboard and saves your decisions:"),
+        copyBtn("python3 scripts/dashboard_server.py", "Copy command")];
+    }
+    const c = j.counts, by = function (s) { return j.items.filter(function (i) { return i.stage === s; }); };
+    const card = function (it) {
+      const m = it.margin || {}, flags = (it.policy ? it.policy.results : []).filter(function (r) { return r.status === "flag"; }).length;
+      return h("button", { class: "pcard", type: "button", onclick: function () { productDrawer(it); } }, thumb(it),
+        h("div", null, h("b", null, it.title), h("div", { class: "chips" }, chip(it.channel), chip(it.fulfilment_model.replace(/_/g, " "))),
+          h("p", { class: "empty" }, (m.margin_pct != null ? m.margin_pct + "% margin · " : "") + gbpn(it.suggested_price_gbp || it.market.price_gbp) + " · delivery ≤ " + it.supplier.delivery_days_max + " days · " + flags + " flag(s)"),
+          h("div", { class: "chips" }, verdictChips(it))));
+    };
+    const rows = function (list, cols) {
+      return table(cols, list.map(function (it) { return { data: it, cells: [it.id, it.title, it.channel, it.reject_reason || (it.history[it.history.length - 1] || {}).note || ""] }; }), productDrawer, "None.");
+    };
+    return [h("div", { class: "grid stats" }, stat("AWAITING YOUR DECISION", String(c.awaiting_approval), "all four reviews in", c.awaiting_approval ? "warn" : ""),
+        stat("IN PROGRESS", String(c.analysed + c.blocked), "reviews pending or blocked"), stat("APPROVED", String(c.approved), "launch pack made"),
+        stat("DENIED", String(c.denied), "kept as lessons"), stat("REJECTED BY RULES", String(c.rejected), "reason kept")),
+      j.stale_rules.length ? h("div", { class: "banner warning" }, h("b", null, "Compliance rules need a review"), h("span", null, j.stale_rules.join(" "))) : null,
+      panel("AWAITING YOUR DECISION", by("awaiting_approval").length ? h("div", { class: "pcards" }, by("awaiting_approval").map(card)) : h("p", { class: "empty" }, "Nothing waiting. Import products with: python3 scripts/research.py import FILE.csv")),
+      panel("IN PROGRESS", rows(by("analysed").concat(by("blocked")), ["ID", "Product", "Channel", "Next / reason"])),
+      panel("REJECTED BY THE RULES", rows(by("rejected"), ["ID", "Product", "Channel", "Reason"])),
+      panel("DECIDED", rows(by("approved").concat(by("denied")), ["ID", "Product", "Channel", "Outcome"]))];
+  }
+  function approvalsPage() {
+    const box = h("div", null, h("p", { class: "empty" }, "Loading..."));
+    loadResearch().then(function (j) { box.replaceChildren.apply(box, approvalsBody(j).filter(Boolean)); });
+    return [head("product research", "APPROVALS"), box];
+  }
+
   /* ---------- shell ---------- */
-  const NAV = [["OPERATE", [["home", "Home"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
+  const NAV = [["OPERATE", [["home", "Home"], ["approvals", "Approvals"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
     ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["connections", "Connections"], ["roadmap", "Roadmap"]]]];
-  const PAGES = { home: home, tasks: tasksPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
+  const PAGES = { home: home, tasks: tasksPage, approvals: approvalsPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
 
   function side(active) {
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
     const nav = h("nav", { class: "nav" });
     NAV.forEach(function (g) {
       nav.append(h("div", { class: "navh" }, g[0]));
-      g[1].forEach(function (p) { nav.append(h("a", { href: "#" + p[0], class: p[0] === active ? "on" : "" }, p[1])); });
+      g[1].forEach(function (p) {
+        nav.append(h("a", { href: "#" + p[0], class: p[0] === active ? "on" : "" }, p[1],
+          p[0] === "approvals" ? h("span", { class: "nav-badge", id: "appr-badge", style: "display:none" }) : null));
+      });
     });
     document.getElementById("side").replaceChildren(
       h("div", { class: "logo" }, h("i"), h("div", null, h("b", null, "COMMERCE OS"), h("span", null, "V1 · OPERATOR MODE"))), nav,
@@ -533,4 +646,5 @@
   }
   window.addEventListener("hashchange", render);
   render();
+  loadResearch();
 })();

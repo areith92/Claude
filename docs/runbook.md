@@ -47,3 +47,14 @@ The Monitor workflow runs the same checks daily and opens a GitHub issue if one 
 Every agent has a SOP in memory/brain/sops/<agent>.md. scripts/run_agent.py adds that SOP, plus up to two related notes found by keyword search in memory/brain/, to every prompt.
 Search by hand: python3 scripts/brain_search.py "your question" [--agent listings]. Add or change a SOP by pull request; the tests check every agent has one with the standard headings.
 The SOP never overrides company rules, governance/ or the approval tiers. Add supplier notes, decisions and lessons as markdown under memory/brain/ (no customer personal data).
+
+## Product research and approvals
+0. Want to see it first? python3 scripts/demo_research.py fills the dashboard with clearly labelled DEMO products (free, no AI calls). python3 scripts/demo_research.py --clean removes them.
+1. python3 scripts/research.py template   writes research/templates/products.csv. Fill one row per product from your own exports (Seller Hub or Terapeak) and supplier quotes. API providers come later.
+2. python3 scripts/research.py import FILE.csv   rules reject cars and car parts, banned items, slow delivery (over 5 days), banned fulfilment models and margins under 30 percent, and keep the reason.
+3. python3 scripts/research.py prepare P-... --manual   prepares prompts for listings, pricing, compliance and finance. Paste each into its AI, save the reply in inbox/, then attach it:
+   python3 scripts/research.py attach P-... AGENT inbox/FILE
+4. python3 scripts/dashboard_server.py   then open Approvals. Review, tick your own checks, acknowledge any flags, then Approve or Deny. Approve makes a launch pack and a sample-order checklist; it never buys or lists.
+5. python3 scripts/research.py images P-...   saves image links as files for analysis only. Their rights stay unverified.
+Compliance: governance/policies/ebay-uk-compliance.yml and social-selling-compliance.yml are checked by scripts/policy_gate.py. A block cannot be approved; a flag needs your acknowledgement.
+Confirm the fee figures in catalogue/fees.yml (they are placeholders) and re-read the compliance files every 90 days.
