@@ -95,43 +95,6 @@ def procedures_for(agent, text, root=ROOT, limit=2):
     return scored[:limit]
 
 
-def department_slug(agent, root=ROOT):
-    """The playbook an agent belongs to: its department in dashboard/departments.yml (the orchestrator has the company routine)."""
-    if agent == "orchestrator":
-        return "company"
-    try:
-        deps = (yaml.safe_load((root / "dashboard" / "departments.yml").read_text()) or {}).get("departments") or {}
-    except (OSError, yaml.YAMLError):
-        return None
-    for key, d in deps.items():
-        if agent in (d.get("agents") or []):
-            return {"customer": "customer-care", "support": "tech-support"}.get(key, key)
-    return None
-
-
-def playbook_text(agent, root=ROOT):
-    slug = department_slug(agent, root)
-    p = root / BRAIN / "sops" / "departments" / f"{slug}.md" if slug else None
-    return (slug, split_note(p.read_text())[1].strip()) if p and p.exists() else (slug, None)
-
-
-def procedures_for(agent, text, root=ROOT, limit=2):
-    """Up to two of the procedures listed in the agent's SOP whose words match the task."""
-    sop = root / BRAIN / "sops" / f"{agent}.md"
-    slugs = re.findall(r"memory/brain/sops/procedures/([a-z0-9-]+)\.md", sop.read_text()) if sop.exists() else []
-    q, scored = set(words(text)), []
-    for slug in slugs:
-        p = root / BRAIN / "sops" / "procedures" / f"{slug}.md"
-        if not p.exists():
-            continue
-        meta, body = split_note(p.read_text())
-        score = 3 * len(q & set(words(str(meta.get("title", ""))))) + 2 * len(q & set(words(" ".join(str(t) for t in (meta.get("tags") or []))))) + min(5, sum(1 for w in words(body) if w in q))
-        if score >= 3:
-            scored.append((score, slug, body.strip()))
-    scored.sort(key=lambda s: (-s[0], s[1]))
-    return scored[:limit]
-
-
 def can_read_brain(agent, root=ROOT):
     p = root / "agents" / agent / "permissions.yml"
     try:
@@ -148,11 +111,6 @@ def brain_context(agent, text, root=ROOT):
     sop = sop_text(agent, root)
     parts = [f"## Your standing procedure (SOP), from {BRAIN}/sops/{agent}.md\n" + sop[:6000]] if sop else \
             [f"## Standing procedure (SOP)\nNo SOP found at {BRAIN}/sops/{agent}.md. Say so and ask the owner to add one."]
-    slug, pb = playbook_text(agent, root)
-    if pb:
-        parts.append(f"## Your department playbook, from {BRAIN}/sops/departments/{slug}.md\n" + pb[:3500])
-    for _, name, body in procedures_for(agent, text, root):
-        parts.append(f"## A procedure that may apply, from {BRAIN}/sops/procedures/{name}.md\n" + body[:1800])
     slug, pb = playbook_text(agent, root)
     if pb:
         parts.append(f"## Your department playbook, from {BRAIN}/sops/departments/{slug}.md\n" + pb[:3500])

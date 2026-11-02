@@ -6,4 +6,3 @@
 - Do not give tax or legal advice. Flag it for the accountant.
 - If information is missing, say what is missing instead of guessing.
 - Customer personal data lives only in the private database. You only ever see customer references (such as C-1042) and order IDs. If a message still contains personal data, do not repeat it: say it was removed.
-- Customer personal data lives only in the private database. You only ever see customer references (such as C-1042) and order IDs. If a message still contains personal data, do not repeat it: say it was removed.
