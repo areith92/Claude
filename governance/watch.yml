@@ -1,0 +1,10 @@
+# Thresholds for scripts/watch.py (the daily watch). Owner edits by pull request.
+ship:
+  default_promised_days: 5        # delivery time promised by the supplier or courier, counted from the day it shipped
+  critical_after_days_late: 3     # this many days past the promise raises a critical alert (earlier lateness is a warning)
+  no_tracking_after_days: 2       # shipped but still no tracking number after this many days
+  stale_after_days: 3             # no tracking update for this many days means the parcel may be stuck
+price:
+  rise_alert_pct: 5               # alert when a supplier's price (item plus shipping) rises by this much
+metrics:
+  window_days: 7                  # the dashboard shows social and shop figures for this many days
