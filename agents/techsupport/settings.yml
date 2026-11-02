@@ -1,0 +1,5 @@
+# Limits for scripts/techsupport.py. Owner edits by pull request.
+max_attempts: 2          # diagnose and test this many times before asking the owner
+max_files: 4             # files one fix may change
+max_file_bytes: 40000    # size of one changed or written file
+evidence_lines: 40       # lines of failing output kept in an incident

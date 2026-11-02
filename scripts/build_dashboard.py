@@ -39,6 +39,42 @@ def role_of(agent):
     return " ".join(m.group(1).split()) if m else ""
 
 
+STAGE_DONE = {"raised": 2, "diagnosing": 2, "fix_proposed": 3, "fix_failed": 3, "fix_tested": 4, "needs_owner": 4,
+              "ready_to_ship": 6, "resolved": 7, "abandoned": 2}
+
+
+def incident_next(i):
+    iid, s, b, ts = i["id"], i["status"], i.get("branch", ""), "python3 scripts/techsupport.py"
+    if s == "raised" or (s == "needs_owner" and not i.get("fix")):
+        return [{"label": "Let Tech Support fix it (uses your Claude key)", "cmd": f"{ts} run {iid}"},
+                {"label": "Or the free route: prepare a prompt to paste into Claude", "cmd": f"{ts} run {iid} --manual"},
+                {"label": "Or give up on it", "cmd": f'{ts} abandon {iid} --reason "why"'}]
+    if s == "diagnosing":
+        return [{"label": "After saving Claude's reply in inbox/", "cmd": f"{ts} ingest {iid} inbox/<file name>"}]
+    if s == "fix_proposed":
+        return [{"label": "Test the fix in a scratch copy", "cmd": f"{ts} test {iid}"}]
+    if s == "fix_failed":
+        return [{"label": "Try again", "cmd": f"{ts} run {iid}"}, {"label": "Or give up on it", "cmd": f'{ts} abandon {iid} --reason "why"'}]
+    if s == "fix_tested":
+        return [{"label": "Apply it on a branch and verify it in your working tree", "cmd": f"{ts} implement {iid}"}]
+    if s == "needs_owner":
+        return [{"label": "Review the change, then apply it on a branch", "cmd": f"{ts} implement {iid} --include-owner-files"}]
+    if s == "ready_to_ship":
+        return [{"label": "1. Push the branch", "cmd": f"git push -u origin {b}"},
+                {"label": "2. Open the pull request", "cmd": f'gh pr create --base main --head {b} --title "Fix {iid}" --body "Tech Support fix"'},
+                {"label": "3. After you merge it on GitHub: pull it down and verify", "cmd": f"git checkout main && git pull && {ts} resolve {iid}"}]
+    return []
+
+
+def incident_view(i):
+    return {"id": i["id"], "created": i.get("created"), "title": i["title"], "severity": i.get("severity", "medium"),
+            "check": i.get("check", ""), "status": i["status"], "stage": STAGE_DONE.get(i["status"], 2),
+            "evidence": (i.get("evidence") or "")[-1500:], "diagnosis": i.get("diagnosis", ""), "root_cause": i.get("root_cause", ""),
+            "fix": i.get("fix"), "test": i.get("test") and {"passed": i["test"].get("passed"), "summary": i["test"].get("summary", "")},
+            "live": i.get("live"), "branch": i.get("branch", ""), "attempts": i.get("attempts", 0),
+            "history": (i.get("history") or [])[-6:], "next": incident_next(i)}
+
+
 def build():
     status = load_yaml("governance/status.yml")
     caps = load_yaml("governance/budgets.yml")["ai_costs"]
@@ -112,6 +148,9 @@ def build():
     ]
     brain = sorted(p.name for p in (ROOT / "memory" / "brain").glob("*.md")) if (ROOT / "memory" / "brain").exists() else []
 
+    iq = safe_yaml("operations/incidents/queue.yml")
+    incidents = [incident_view(i) for i in (iq.get("incidents") or [])]
+
     alerts = []
     if state == "stopped":
         alerts.append(f"AI spend stopped: {total:.2f} of {cap} GBP used in {month}. Agents will not call paid models until next month, or until the cap is raised in governance/budgets.yml.")
@@ -123,6 +162,10 @@ def build():
         alerts.append(f"{marker['agent']} reached its own monthly cap ({marker['spent_gbp']} of {marker['cap_gbp']} GBP).")
     if status.get("paused"):
         alerts.append("All agents are paused (kill switch).")
+    open_inc = [i for i in incidents if i["status"] not in ("resolved", "abandoned")]
+    if open_inc:
+        alerts.append(f"Tech Support: {len(open_inc)} open incident(s)" +
+                      (f", {sum(1 for i in open_inc if i['status'] == 'ready_to_ship')} fix ready to ship." if any(i["status"] == "ready_to_ship" for i in open_inc) else "."))
 
     title = ""
     if state == "stopped":
@@ -155,6 +198,7 @@ def build():
         "connections": connections,
         "phases": {"current": 1, "list": PHASES},
         "brain": {"count": len(brain), "notes": brain[:40]},
+        "incidents": incidents,
     }
     body = "# " + title + "\n\n" + "\n".join("- " + x for x in alerts) + \
            "\n\nTo continue before next month, raise total_monthly_cap in governance/budgets.yml by pull request.\n" if title else ""

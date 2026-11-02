@@ -8,6 +8,7 @@ agents:
   compliance:   {preferred: claude}
   reviewer:     {preferred: gemini}
   monitor:      {preferred: claude}
+  techsupport:  {preferred: claude, max_tokens: 3000}
   pricing:      {preferred: gemini}
   inventory:    {preferred: gemini}
   returns:      {preferred: claude}

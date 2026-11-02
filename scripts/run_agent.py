@@ -56,6 +56,7 @@ def main():
     ap.add_argument("--task", required=True)
     ap.add_argument("--input-file")
     ap.add_argument("--skip-pii-check", action="store_true", help="manual mode only")
+    ap.add_argument("--manual", action="store_true", help="free route: prepare a prompt even if the agent is set to the API")
     a = ap.parse_args()
 
     status = load_yaml("governance/status.yml")
@@ -73,7 +74,7 @@ def main():
     extra = ""
     if a.input_file:
         extra = (ROOT / a.input_file).read_text() if (ROOT / a.input_file).exists() else open(a.input_file).read()
-    mode = cfg.get("provider", status.get("provider", "manual"))
+    mode = "manual" if a.manual else cfg.get("provider", status.get("provider", "manual"))
     pii = find_pii(a.task + "\n" + extra)
     if pii and not (a.skip_pii_check and mode == "manual"):
         print("Refused: the task looks like it contains personal data (" + ", ".join(pii) + "). Use order IDs instead.")
@@ -87,7 +88,8 @@ def main():
 
     routing = load_yaml("models/routing.yml")
     pref = routing["agents"].get(a.agent, {}).get("preferred", "claude")
-    model_cfg = routing["models"][pref]
+    model_cfg = dict(routing["models"][pref])
+    model_cfg["max_tokens"] = routing["agents"].get(a.agent, {}).get("max_tokens", model_cfg.get("max_tokens", 1500))
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
     name = f"{stamp}-{a.agent}.md"
     banner = f"DRY RUN: proposal only. Live actions are not implemented. Dry-run flag: {dry}\n"

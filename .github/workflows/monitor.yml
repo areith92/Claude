@@ -1,0 +1,30 @@
+name: Monitor
+# Runs the health checks daily. If one fails, it opens a GitHub issue (once per day) so you hear about it.
+# The fix itself happens on your side: python3 scripts/techsupport.py detect, then run <incident id>.
+on:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pyyaml
+      - name: Run the health checks
+        run: python scripts/monitor_checks.py --alert-file /tmp/monitor.md || true
+      - name: Open an issue if something is failing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -s /tmp/monitor.md ] || exit 0
+          title=$(head -1 /tmp/monitor.md | sed 's/^# //')
+          gh label create monitor-alert --color FBCA04 --force >/dev/null 2>&1 || true
+          if gh issue list --label monitor-alert --state all --limit 100 --json title --jq '.[].title' | grep -Fxq "$title"; then
+            echo "Already raised: $title"
+          else
+            gh issue create --title "$title" --label monitor-alert --body-file /tmp/monitor.md
+          fi

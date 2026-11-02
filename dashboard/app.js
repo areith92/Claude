@@ -182,13 +182,14 @@
     const on = D.agents.filter(function (a) { return a.enabled; }).length;
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
     const q = Object.entries(D.queue).map(function (kv) { return kv[0] + " " + kv[1]; }).join(" · ");
-    return [head("overview", "COMMERCE OS"), banner(),
+    return [head("overview", "COMMERCE OS"), banner(), supportBanner(),
       h("div", { class: "grid stats" },
         stat("AI SPEND · MTD", gbp(s.spent_gbp), "of £" + s.cap_gbp + " cap", s.state === "stopped" ? "bad" : s.state === "warning" ? "warn" : ""),
         stat("NEEDS YOUR DECISION", String(D.approvals.length), D.approvals.length ? "see Tasks" : "all clear", D.approvals.length ? "warn" : ""),
         stat("TASKS", String(D.tasks.length), q || "none yet"),
         stat("AGENTS", on + "/" + D.agents.length, live + " on the API"),
-        stat("MODE", D.mode.provider || "manual", D.mode.dry_run_default ? "draft only · no live actions" : "live actions on")),
+        stat("MODE", D.mode.provider || "manual", D.mode.dry_run_default ? "draft only · no live actions" : "live actions on"),
+        stat("TECH SUPPORT", String(openInc().length), fixReady().length ? plural(fixReady().length, "fix") + " ready" : "open incidents", fixReady().length ? "warn" : openInc().length ? "bad" : "")),
       h("div", { class: "cols" }, decisions(),
         panel("DEPARTMENTS", h("div", { class: "deptchips" }, D.departments.map(function (d) {
           return h("a", { class: "deptchip", href: "#core/" + d.id, style: "--c:" + d.color }, h("i"), h("div", null, d.label, h("small", null, plural(d.agents.length, "agent"))));
@@ -415,7 +416,8 @@
       [allDry ? "ok" : "warn", "Draft only", allDry ? "Every agent is in dry-run mode." : "Some agents are not in dry-run mode."],
       ["ok", "Personal-data guard", "run_agent.py refuses prompts that look like they contain personal data."],
       [D.approvals.length ? "warn" : "ok", "Decisions waiting", D.approvals.length + " task(s) need your decision."],
-      [D.latest_digest ? "ok" : "warn", "Owner digest", D.latest_digest || "No digest yet. Run the digest command."]];
+      [D.latest_digest ? "ok" : "warn", "Owner digest", D.latest_digest || "No digest yet. Run the digest command."],
+      [openInc().length ? "bad" : "ok", "Tech Support", openInc().length + " open incident(s). Run python3 scripts/techsupport.py detect to check."]];
     return [head("system checks", "HEALTH"), panel(null, checks.map(function (c) {
       return h("div", { class: "check" }, h("span", { class: c[0] === "ok" ? "dot" : "dot off", style: c[0] === "ok" ? null : "background:" + (c[0] === "bad" ? "#ff4d6d" : "#fbbf24") }),
         h("div", null, h("b", null, c[1]), h("small", null, c[2])));
@@ -433,10 +435,67 @@
     })];
   }
 
+  /* ---------- tech support ---------- */
+  const STAGES = ["Detected", "Raised", "Diagnosed", "Fix tested", "Implemented", "Verified", "Shipped"];
+  const incList = function () { return D.incidents || []; };
+  const openInc = function () { return incList().filter(function (i) { return i.status !== "resolved" && i.status !== "abandoned"; }); };
+  const fixReady = function () { return incList().filter(function (i) { return i.status === "ready_to_ship"; }); };
+  const incCls = { ready_to_ship: "ok", resolved: "ok", fix_failed: "bad", needs_owner: "warn", raised: "bad", abandoned: "mut" };
+  function stageBar(done) {
+    return h("div", { class: "stages" }, STAGES.map(function (s, i) {
+      return h("div", { class: "stage" + (i < done ? " done" : i === done ? " now" : "") }, h("i"), h("span", null, s));
+    }));
+  }
+  function supportBanner() {
+    const ready = fixReady(), open = openInc();
+    if (ready.length) {
+      return h("div", { class: "banner" }, h("b", null, "FIX READY: " + ready.map(function (i) { return i.id; }).join(", ")),
+        h("span", null, "Verified in your working tree. Open Tech Support to ship it."), h("a", { class: "btn", href: "#support" }, "Open"));
+    }
+    if (open.length) {
+      return h("div", { class: "banner stopped" }, h("b", null, plural(open.length, "open incident")),
+        h("span", null, "Tech Support can work on it."), h("a", { class: "btn", href: "#support" }, "Open"));
+    }
+    return null;
+  }
+  function incidentDrawer(i) {
+    drawer(i.id, i.title, [
+      h("div", { class: "badges" }, pill(i.severity, i.severity === "high" ? "bad" : "warn"), pill(i.status.replace(/_/g, " "), incCls[i.status]), chip("check: " + i.check)),
+      stageBar(i.stage),
+      section("EVIDENCE", h("pre", { class: "evidence" }, i.evidence || "none")),
+      i.diagnosis ? section("DIAGNOSIS", h("p", null, i.diagnosis + (i.root_cause ? " Root cause: " + i.root_cause : ""))) : null,
+      i.fix ? section("PROPOSED CHANGES", h("div", { class: "chips" }, i.fix.files.map(function (f) {
+        return chip(f.path + " · " + f.op + " · " + (f.kind === "apply" ? "Tech Support may apply" : "owner-only"), f.kind === "apply" ? "" : "bad");
+      }))) : null,
+      i.test ? section("SCRATCH TEST", h("p", null, (i.test.passed ? "PASSED. " : "FAILED. ") + i.test.summary)) : null,
+      i.live ? section("WORKING-TREE CHECK", h("p", null, (i.live.passed ? "PASSED. " : "FAILED. ") + i.live.summary)) : null,
+      i.branch ? section("BRANCH", h("p", { class: "mono" }, i.branch)) : null,
+      section("WHAT HAPPENED", h("div", null, i.history.map(function (x) { return h("div", { class: "empty" }, x.date + " · " + x.status + " · " + x.note); }))),
+      section("NEXT STEPS", i.next.length ? h("div", null, i.next.map(function (n) {
+        return h("div", null, h("div", { class: "empty" }, n.label), copyBtn(n.cmd, "Copy command"), h("div", { class: "mono" }, n.cmd));
+      })) : h("p", { class: "empty" }, "Nothing to do.")),
+      section("THE HUMAN", h("p", null, "You push and merge. Tech Support never pushes, merges or changes owner-only files unless you ask."))]);
+  }
+  function supportPage() {
+    const all = incList(), needs = all.filter(function (i) { return i.status === "needs_owner"; });
+    return [head("monitor → tech support", "TECH SUPPORT"), supportBanner(),
+      h("div", { class: "grid stats" },
+        stat("OPEN INCIDENTS", String(openInc().length), openInc().length ? "see below" : "all clear", openInc().length ? "bad" : ""),
+        stat("FIX READY TO SHIP", String(fixReady().length), "verified, waiting for you", fixReady().length ? "warn" : ""),
+        stat("NEEDS YOUR DECISION", String(needs.length), "owner-only or stuck"),
+        stat("RESOLVED", String(all.filter(function (i) { return i.status === "resolved"; }).length), "all time")),
+      panel("HOW A PROBLEM IS HANDLED", stageBar(-1),
+        h("p", { class: "empty" }, "The monitor flags a failing check and raises it. Tech Support (Claude) diagnoses it and proposes a fix. The fix is tested in a scratch copy, applied on a branch, and checked again in your working tree. You push the branch and merge it. After you pull it down, the fix is verified once more and the incident closes."),
+        copyBtn("python3 scripts/techsupport.py detect", "Copy: run the health checks"), copyBtn("python3 scripts/techsupport.py status", "Copy: list incidents")),
+      panel("INCIDENTS", table(["ID", "Check", "Problem", "Severity", "Status"], all.map(function (i) {
+        return { data: i, cells: [i.id, i.check, i.title, pill(i.severity, i.severity === "high" ? "bad" : "warn"), pill(i.status.replace(/_/g, " "), incCls[i.status])] };
+      }), incidentDrawer, "No incidents. Run the health checks to look for problems."))];
+  }
+
   /* ---------- shell ---------- */
-  const NAV = [["OPERATE", [["home", "Home"], ["tasks", "Tasks"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
+  const NAV = [["OPERATE", [["home", "Home"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
     ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["connections", "Connections"], ["roadmap", "Roadmap"]]]];
-  const PAGES = { home: home, tasks: tasksPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
+  const PAGES = { home: home, tasks: tasksPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
 
   function side(active) {
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;

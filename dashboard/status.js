@@ -34,6 +34,11 @@ window.DASHBOARD = {
       "agent": "compliance",
       "spent_gbp": 0,
       "cap_gbp": 1
+    },
+    {
+      "agent": "techsupport",
+      "spent_gbp": 0,
+      "cap_gbp": 1
     }
   ],
   "alerts": [],
@@ -137,6 +142,18 @@ window.DASHBOARD = {
       "dry_run": true,
       "spent_gbp": 0,
       "cap_gbp": 0
+    },
+    {
+      "name": "techsupport",
+      "role": "Fixes problems in this repo's own systems (scripts, tests, dashboard, docs, agent briefs) when the monitor raises an incident. Finds the root cause, proposes the smallest safe fix as exact file changes, and learns from failed attempts. It never touches eBay, money or customers.",
+      "enabled": true,
+      "dept": "support",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 1
     },
     {
       "name": "pricing",
@@ -260,8 +277,21 @@ window.DASHBOARD = {
         "monitor"
       ],
       "tools": [
+        "Health checks",
         "Budget guard",
         "Kill switch"
+      ]
+    },
+    {
+      "id": "support",
+      "label": "Tech Support",
+      "color": "#fb923c",
+      "agents": [
+        "techsupport"
+      ],
+      "tools": [
+        "Incident queue",
+        "Test sandbox"
       ]
     }
   ],
@@ -272,7 +302,7 @@ window.DASHBOARD = {
       "id": "claude",
       "name": "Claude API",
       "status": "in use",
-      "detail": "Agents on the API: orchestrator, listings, compliance. Key lives in GitHub secrets, never in the repo."
+      "detail": "Agents on the API: orchestrator, listings, compliance, techsupport. Key lives in GitHub secrets, never in the repo."
     },
     {
       "id": "gemini",
@@ -321,5 +351,6 @@ window.DASHBOARD = {
   "brain": {
     "count": 0,
     "notes": []
-  }
+  },
+  "incidents": []
 };

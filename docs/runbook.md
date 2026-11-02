@@ -33,3 +33,12 @@ python scripts/orchestrate.py status shows the queue at any time. The Kill switc
 - The cap resets on the first of each month. To continue sooner, raise total_monthly_cap by pull request.
 - View the dashboard: python3 scripts/build_dashboard.py, then python3 -m http.server 8000 --directory dashboard.
 - The caps use estimated prices in models/costs.yml. Also set a monthly spend limit in the Anthropic Console as the independent backstop.
+
+## Tech Support (monitor, diagnose, fix, verify)
+1. python3 scripts/techsupport.py detect   runs the health checks and raises an incident for each failing one.
+2. python3 scripts/techsupport.py run INC-...   Claude diagnoses, the fix is tested in a scratch copy, applied on a branch fix/inc-..., and checked again in your working tree.
+   Free route: add --manual, paste the prepared prompt into Claude, save the reply in inbox/, then ingest, test and implement (the command prints them).
+3. You are told FIX READY. Push the branch, open and merge the pull request, then: git checkout main && git pull && python3 scripts/techsupport.py resolve INC-...
+Tech Support only changes scripts/, tests/, docs/, dashboard/ and agent briefs. Fixes to governance, models, workflows, permissions and the safety scripts are
+proposals; they are applied only if you run implement with --include-owner-files. It never pushes or merges. The dashboard page Tech Support shows every incident.
+The Monitor workflow runs the same checks daily and opens a GitHub issue if one fails.

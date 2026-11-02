@@ -7,4 +7,5 @@ departments:
   customer:   {label: Customer care, color: "#3b82f6", agents: [messages],                   tools: [eBay messages]}
   finance:    {label: Finance,       color: "#34d399", agents: [finance, analytics],         tools: [Cost log, Accountant pack]}
   compliance: {label: Compliance,    color: "#a78bfa", agents: [compliance, reviewer],       tools: [Policies, Approval tiers]}
-  monitoring: {label: Monitoring,    color: "#fbbf24", agents: [monitor],                    tools: [Budget guard, Kill switch]}
+  monitoring: {label: Monitoring,    color: "#fbbf24", agents: [monitor],                    tools: [Health checks, Budget guard, Kill switch]}
+  support:    {label: Tech Support,  color: "#fb923c", agents: [techsupport],                tools: [Incident queue, Test sandbox]}
