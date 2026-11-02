@@ -11,7 +11,9 @@ agents:
   reviewer:     {enabled: true,  dry_run: true, provider: api}
   monitor:      {enabled: true,  dry_run: true}
   techsupport:  {enabled: true,  dry_run: true, provider: api}
-  pricing:      {enabled: false, dry_run: true}
+  pricing:      {enabled: true,  dry_run: true}
+  research:     {enabled: true,  dry_run: true}
+  sourcing:     {enabled: true,  dry_run: true}
   inventory:    {enabled: false, dry_run: true}
   returns:      {enabled: false, dry_run: true}
   analytics:    {enabled: false, dry_run: true}

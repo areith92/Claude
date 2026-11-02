@@ -9,6 +9,8 @@ agents:
   reviewer:     {preferred: gemini}
   monitor:      {preferred: claude}
   techsupport:  {preferred: claude, max_tokens: 3000}
+  research:     {preferred: gemini}
+  sourcing:     {preferred: gemini}
   pricing:      {preferred: gemini}
   inventory:    {preferred: gemini}
   returns:      {preferred: claude}

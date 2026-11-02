@@ -1,0 +1,53 @@
+# Rules for the product research pipeline (scripts/research.py). Owner edits by pull request.
+max_products_per_run: 20
+min_margin_pct: 30                  # below this a product is rejected, and the reason is kept
+stress_cost_increase_pct: 10        # flag it if the margin would fall below the minimum when cost rises by this much
+max_supplier_delivery_days: 5       # upper end of the supplier's delivery estimate
+research_freshness_days: 7          # data older than this must be re-checked before approval
+allowed_fulfilment_models:          # eBay forbids buying from another retailer or marketplace that ships direct to the buyer
+  ebay-uk: [hold_stock, wholesale_dropship]
+  social: [hold_stock, wholesale_dropship, marketplace_dropship]
+banned_keywords:                    # rejected straight away, never researched
+  - car
+  - cars
+  - automotive
+  - vehicle
+  - vehicles
+  - motorcycle
+  - motorbike
+  - car part
+  - car parts
+  - auto part
+  - spare part
+  - tyre
+  - tyres
+  - tire
+  - alloy wheel
+  - exhaust
+  - brake pad
+  - windscreen
+  - wiper blade
+  - car seat
+  - dash cam
+  - sat nav
+  - weapon
+  - knife
+  - firearm
+  - vape
+  - tobacco
+  - counterfeit
+restricted_keywords:                # allowed, but flagged: documents or checks are needed before listing
+  - battery
+  - charger
+  - electrical
+  - led
+  - toy
+  - baby
+  - child
+  - cosmetic
+  - skincare
+  - supplement
+  - food
+  - medical
+  - heater
+  - laser

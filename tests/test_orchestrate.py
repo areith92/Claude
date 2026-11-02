@@ -102,7 +102,7 @@ class EndToEnd(unittest.TestCase):
             by_agent = {t["agent"]: t for t in q["tasks"]}
             self.assertEqual(by_agent["listings"]["status"], "delegated")
             self.assertEqual(by_agent["compliance"]["status"], "delegated")
-            self.assertEqual(by_agent["pricing"]["status"], "blocked")
+            self.assertEqual(by_agent["inventory"]["status"], "blocked")
 
             (repo / "inbox").mkdir(exist_ok=True)
             for agent, tier in (("listings", "needs_approval"), ("compliance", "auto")):

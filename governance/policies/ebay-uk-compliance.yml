@@ -1,0 +1,67 @@
+# eBay UK compliance rules, as checks the code can run. A DRAFT written from public policy pages: the owner confirms each rule
+# against the current eBay UK help pages and updates `reviewed` when done. The gate warns when this file is older than review_every_days.
+channel: ebay-uk
+reviewed: 2026-11-02
+review_every_days: 90
+confirmed_by_owner: false
+rules:
+  - id: EBAY-DS-1
+    title: Do not buy from another retailer or marketplace that ships straight to the buyer
+    severity: block
+    check: {type: field_not_in, field: fulfilment_model, values: [marketplace_dropship]}
+    why: eBay's drop shipping policy allows a wholesale supplier to ship to the buyer, but not AliExpress, Amazon or any other retailer or marketplace. Penalties include selling restrictions and account suspension.
+  - id: EBAY-DS-2
+    title: Stock you hold must really be in your hands before you list it
+    severity: flag
+    check: {type: field_true_if, field: stock_in_hand, when_field: fulfilment_model, when_value: hold_stock}
+    why: Listing items you do not hold is what the drop shipping policy is aimed at. Mark stock_in_hand once the sample or batch has arrived.
+  - id: EBAY-DS-3
+    title: Wholesale drop shipping needs a supplier agreement
+    severity: flag
+    check: {type: field_true_if, field: supplier_agreement, when_field: fulfilment_model, when_value: wholesale_dropship}
+    why: eBay expects a real supplier relationship. Keep the agreement or email thread and mark supplier_agreement.
+  - id: EBAY-ITEM-1
+    title: No prohibited items (cars and car parts are excluded by your own rule)
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: banned_keywords}
+    why: Banned keywords from catalogue/research.yml, plus anything on eBay's prohibited and restricted items list.
+  - id: EBAY-ITEM-2
+    title: Restricted-type products need documents or checks
+    severity: flag
+    check: {type: keywords_absent, fields: [keyword, title, category], list: restricted_keywords}
+    why: Batteries, electricals, toys, baby products, cosmetics, supplements and similar need safety documents or eBay approval. Check before listing.
+  - id: EBAY-IP-1
+    title: Brand and lookalike risk (VeRO)
+    severity: flag
+    check: {type: field_empty_or_true, field: brand_authorised, empty_field: brand}
+    why: Branded goods need proof you may sell them. Lookalikes and copies are removed and can lead to account action.
+  - id: EBAY-IMG-1
+    title: Images must be yours or licensed
+    severity: flag
+    check: {type: images_rights}
+    why: Photos copied from another seller or a supplier may infringe copyright. Use your own photos from the sample, or confirm a licence.
+  - id: EBAY-SAFE-1
+    title: UK product safety documents
+    severity: flag
+    check: {type: field_true, field: safety_docs_ok}
+    why: Goods sold in the UK must be safe and carry the right marking (UKCA or CE where it applies). Tick safety_docs_ok once checked.
+  - id: EBAY-DELIV-1
+    title: State an honest delivery time
+    severity: flag
+    check: {type: field_true, field: delivery_promise_checked}
+    why: The delivery time in the listing must be one you can meet. You stay responsible for delivery even if a supplier ships.
+  - id: EBAY-FEE-1
+    title: Fee figures confirmed
+    severity: flag
+    check: {type: fees_confirmed}
+    why: Margins are only as good as the fee figures in catalogue/fees.yml.
+  - id: EBAY-MARGIN-1
+    title: Margin still above the minimum if costs rise
+    severity: flag
+    check: {type: stress_margin_ok}
+    why: A small cost rise would take this product under your minimum margin.
+  - id: EBAY-DATA-1
+    title: Research data is fresh
+    severity: block
+    check: {type: fresh}
+    why: Prices and stock change. Re-check the data before approving.

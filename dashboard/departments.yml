@@ -8,4 +8,5 @@ departments:
   finance:    {label: Finance,       color: "#34d399", agents: [finance, analytics],         tools: [Cost log, Accountant pack]}
   compliance: {label: Compliance,    color: "#a78bfa", agents: [compliance, reviewer],       tools: [Policies, Approval tiers]}
   monitoring: {label: Monitoring,    color: "#fbbf24", agents: [monitor],                    tools: [Health checks, Budget guard, Kill switch]}
+  research:   {label: Research,      color: "#2dd4bf", agents: [research, sourcing],      tools: [Research CSV import, Margin calculator, Compliance gate]}
   support:    {label: Tech Support,  color: "#fb923c", agents: [techsupport],                tools: [Incident queue, Test sandbox]}
