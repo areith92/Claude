@@ -14,6 +14,11 @@ agents:
   pricing:      {enabled: true,  dry_run: true}
   research:     {enabled: true,  dry_run: true}
   sourcing:     {enabled: true,  dry_run: true}
+  facebook:     {enabled: true,  dry_run: true}
+  instagram:    {enabled: true,  dry_run: true}
+  tiktok:       {enabled: true,  dry_run: true}
+  pinterest:    {enabled: true,  dry_run: true}
+  marketing:    {enabled: true,  dry_run: true}
   inventory:    {enabled: false, dry_run: true}
   returns:      {enabled: false, dry_run: true}
   analytics:    {enabled: false, dry_run: true}

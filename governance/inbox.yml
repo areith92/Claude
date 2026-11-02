@@ -1,0 +1,8 @@
+# How incoming messages and comments are handled (scripts/inbox.py). Owner edits by pull request.
+# Nothing is sent automatically while this list is empty. Even a listed category only becomes "ready" when its reply template has every fact filled in
+# (catalogue/support/facts.yml) AND the platform connection exists. Until then every reply is a draft that waits for you.
+auto_send_categories: []
+never_auto: [complaint, return_refund, delivery_delay, payment, safety, legal, abuse]   # always need a person, whatever the list above says
+escalate_categories: [safety, legal, abuse]                                             # raised to you as an alert straight away; no reply is drafted
+disclosure: "This reply was written by an automated assistant. A person can step in at any time, just say so."
+reply_within_hours: 24                                                                  # Meta only allows a reply inside 24 hours of the customer's message

@@ -6,6 +6,7 @@ research/dossiers/
 research/images/
 research/approved/
 research/exports/
+operations/data/
 *.pyc
 .DS_Store
 .venv/

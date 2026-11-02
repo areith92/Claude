@@ -1,0 +1,43 @@
+# Reply templates, written for UK customers. {{double braces}} are filled from catalogue/support/facts.yml.
+# A template whose facts are not all filled in is shown to you as a draft with the missing facts listed. It is never ready to send.
+templates:
+  - id: order_status_info
+    category: order_status
+    for: [dm]
+    needs: [business_name, delivery_estimate_text]
+    reply: "Hi, thanks for getting in touch with {{business_name}}. Our orders {{delivery_estimate_text}}. If you send us your order number (please do not send your address or card details) we will check exactly where it is."
+  - id: delivery_delay_ack
+    category: delivery_delay
+    for: [dm]
+    needs: [business_name, courier_or_supplier_text, reply_time_text]
+    reply: "Hi, I am sorry your order has not arrived yet. Please send your order number (not your address or card details) and we will check with {{courier_or_supplier_text}} and come back to you within {{reply_time_text}}. {{business_name}}"
+  - id: returns_info
+    category: return_refund
+    for: [dm]
+    needs: [business_name, return_window_days, return_postage_text]
+    reply: "Hi, thanks for letting us know. You can return an item within {{return_window_days}} days. {{return_postage_text}}. Please send your order number and we will take it from there. {{business_name}}"
+  - id: complaint_ack
+    category: complaint
+    for: [dm]
+    needs: [business_name, reply_time_text]
+    reply: "Hi, I am really sorry about this. Please send your order number and a photo of the problem (not your address or card details) and we will look into it and reply within {{reply_time_text}}. {{business_name}}"
+  - id: price_info
+    category: price_discount
+    for: [dm, comment]
+    needs: [business_name, price_policy_text]
+    reply: "Hi, thanks for asking. Our prices are {{price_policy_text}}. {{business_name}}"
+  - id: payment_help
+    category: payment
+    for: [dm]
+    needs: [business_name, payment_help_text]
+    reply: "Hi, {{payment_help_text}}. Please do not send card details in a message. {{business_name}}"
+  - id: public_move_to_dm
+    category: order_specific
+    for: [comment]
+    needs: [business_name]
+    reply: "Thanks for your comment, and sorry for any trouble. Please send us a private message with your order number and we will help straight away. {{business_name}}"
+  - id: thanks
+    category: praise
+    for: [dm, comment]
+    needs: [business_name]
+    reply: "Thank you so much, that really made our day! {{business_name}}"
