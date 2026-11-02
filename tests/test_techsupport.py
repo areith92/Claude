@@ -36,7 +36,7 @@ class Rules(unittest.TestCase):
             {"path": "../evil.py", "op": "write", "content": "x"},
             {"path": "/etc/passwd", "op": "write", "content": "x"},
             {"path": "logs/costs.csv", "op": "write", "content": "x"},
-            {"path": "scripts/a.py", "op": "write", "content": "key = 'sk-ant-abcdefghijklmnop12345'"},
+            {"path": "scripts/a.py", "op": "write", "content": "key = '" + "sk-ant-" + "abcdefghijklmnop12345" + "'"},
             {"path": "scripts/b.py", "op": "write", "content": "# contact bob@example.com"},
             {"path": "scripts/c.py", "op": "delete"}]}
         changes, problems = ts.validate_fix(plan, dict(CFG, max_files=10))
