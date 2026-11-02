@@ -109,3 +109,8 @@ td,th{padding:7px 8px;border-bottom:1px solid var(--line)}tr.click{cursor:pointe
 .stage.now i{background:var(--warn);box-shadow:0 0 8px var(--warn)}.stage.now{color:#fff}
 pre.evidence{background:#070b14;border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:240px;margin:0}
 ol.sop{padding-left:18px;margin:8px 0}ol.sop li{margin-bottom:5px}
+.nav-badge{margin-left:auto;background:var(--warn);color:#000;border-radius:10px;padding:0 7px;font-size:10px;font-weight:700}
+.pcards{display:grid;gap:10px}.pcard{display:flex;gap:12px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%}
+.pcard:hover{border-color:var(--acc)}.thumb{width:84px;height:84px;object-fit:cover;border-radius:6px;background:#0a1222;flex:none}.thumb.none{display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:10px}
+.gallery{display:flex;gap:6px;flex-wrap:wrap}.gallery img{width:70px;height:70px;object-fit:cover;border-radius:5px;border:1px solid var(--line)}
+.checks label{display:block;padding:3px 0}.btn.good{border-color:var(--ok);color:var(--ok);margin-right:8px}.btn.badbtn{border-color:var(--bad);color:var(--bad)}
