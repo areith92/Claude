@@ -11,6 +11,11 @@ agents:
   techsupport:  {preferred: claude, max_tokens: 3000}
   research:     {preferred: gemini}
   sourcing:     {preferred: gemini}
+  facebook:     {preferred: claude}
+  instagram:    {preferred: claude}
+  tiktok:       {preferred: claude}
+  pinterest:    {preferred: claude}
+  marketing:    {preferred: gemini}
   pricing:      {preferred: gemini}
   inventory:    {preferred: gemini}
   returns:      {preferred: claude}

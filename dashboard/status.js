@@ -440,6 +440,191 @@ window.DASHBOARD = {
       "cap_gbp": 0
     },
     {
+      "name": "facebook",
+      "role": "Looks after the Facebook Page: replies to comments and Messenger messages from drafts you approve, escalates anything sensitive.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/facebook.md",
+        "purpose": "Answer Facebook comments and Messenger messages helpfully and safely, with drafts a person approves.",
+        "steps": [
+          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
+          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
+          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
+          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
+          "Reply inside 24 hours of the customer's message: that is Meta's standard window and a late reply may not be allowed to send.",
+          "A comment can get one private reply within 7 days. Do not plan a follow-up unless the customer answers.",
+          "If a reply is automated, it must say so (governance/inbox.yml holds the wording).",
+          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
+          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
+          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+        ],
+        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
+        "escalate": [
+          "Safety, medical or legal words",
+          "Chargebacks, disputes or threats",
+          "Anything about a refund or compensation",
+          "A customer who is upset or has written more than twice",
+          "A message you cannot answer from the facts you have"
+        ],
+        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "customer",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "instagram",
+      "role": "Looks after the Instagram account: replies to comments, DMs and story replies from drafts you approve, escalates anything sensitive.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/instagram.md",
+        "purpose": "Answer Instagram comments, DMs and story replies helpfully and safely, with drafts a person approves.",
+        "steps": [
+          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
+          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
+          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
+          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
+          "Reply inside 24 hours of a DM or a story reply: that is Meta's standard window.",
+          "A comment can get one private reply within 7 days, and the customer must answer before you can continue.",
+          "Keep public replies short and point to the link in the bio for product pages. If a reply is automated, it must say so.",
+          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
+          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
+          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+        ],
+        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
+        "escalate": [
+          "Safety, medical or legal words",
+          "Chargebacks, disputes or threats",
+          "Anything about a refund or compensation",
+          "A customer who is upset or has written more than twice",
+          "A message you cannot answer from the facts you have"
+        ],
+        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "customer",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "tiktok",
+      "role": "Looks after TikTok comments and messages: drafts replies you approve, escalates anything sensitive.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/tiktok.md",
+        "purpose": "Answer TikTok comments and messages helpfully and safely, with drafts a person approves.",
+        "steps": [
+          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
+          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
+          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
+          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
+          "Keep public replies short and on-brand, and answer the question in the comment itself where you can.",
+          "Direct messages and TikTok Shop messages follow TikTok's own rules, which can change. Check the current rules before relying on any automation.",
+          "Never move a customer to an unofficial channel.",
+          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
+          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
+          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+        ],
+        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
+        "escalate": [
+          "Safety, medical or legal words",
+          "Chargebacks, disputes or threats",
+          "Anything about a refund or compensation",
+          "A customer who is upset or has written more than twice",
+          "A message you cannot answer from the facts you have"
+        ],
+        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "customer",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "pinterest",
+      "role": "Looks after Pinterest comments and messages: drafts replies you approve, escalates anything sensitive.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/pinterest.md",
+        "purpose": "Answer Pinterest comments and questions on pins helpfully and safely, with drafts a person approves.",
+        "steps": [
+          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
+          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
+          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
+          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
+          "Most contact is a question on a pin. Answer briefly and point to the product page.",
+          "Messages are rare. Treat them like any other customer message and follow the same escalation rules.",
+          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
+          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
+          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+        ],
+        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
+        "escalate": [
+          "Safety, medical or legal words",
+          "Chargebacks, disputes or threats",
+          "Anything about a refund or compensation",
+          "A customer who is upset or has written more than twice",
+          "A message you cannot answer from the facts you have"
+        ],
+        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "customer",
+      "model": "claude-sonnet-5-5",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "marketing",
+      "role": "Plans the content calendar, writes post briefs and captions for each platform, and proposes ad campaigns inside the monthly ad budget. It never publishes and never sees customer messages.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/marketing.md",
+        "purpose": "Turn approved products into a steady, honest content plan, with captions, shot lists and image guidance, and propose small ad campaigns for your approval.",
+        "steps": [
+          "Pick the products to feature this week from approved launch packs only.",
+          "For each platform plan up to 3 posts a week: product, hook in the first line, caption in UK English, 3 to 5 hashtags, one clear call to action and the product page link.",
+          "Write a shot list and image guidance for each post. Use the owner's own photos and video of the real product. AI-made images may only be backgrounds or graphics, never the product itself, and must be labelled where the platform requires it.",
+          "Never describe a product as better than it is. No fake reviews, no invented before-and-after, no made-up scarcity. Prices and delivery times must be true. Paid or gifted promotion must be labelled (for example #ad).",
+          "Check each post against governance/policies/social-selling-compliance.yml and note anything that needs the owner to confirm.",
+          "Look at last week's engagement. Say what worked, drop what did not, and explain in one line.",
+          "Propose ad campaigns only as proposals: platform, product, audience, budget, dates and the test it runs. The total approved for a month may not pass the monthly ad cap.",
+          "Give the owner one list to approve. Nothing is published or paid for from here."
+        ],
+        "tier": "Briefs and captions are auto. Publishing and every ad spend are needs_approval.",
+        "escalate": [
+          "A claim you cannot back up",
+          "A product that needs safety documents or brand permission",
+          "A campaign that would pass the monthly ad cap"
+        ],
+        "never": "Publish, post, pay for ads or message customers. Invent reviews, scarcity or results. Use a competitor's images. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "marketing",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
       "name": "inventory",
       "role": "Tracks stock, proposes reorders and compares suppliers.",
       "sop": {
@@ -568,10 +753,16 @@ window.DASHBOARD = {
       "label": "Customer care",
       "color": "#3b82f6",
       "agents": [
-        "messages"
+        "messages",
+        "facebook",
+        "instagram",
+        "tiktok",
+        "pinterest"
       ],
       "tools": [
-        "eBay messages"
+        "eBay messages",
+        "Social inbox",
+        "Reply templates"
       ]
     },
     {
@@ -625,6 +816,19 @@ window.DASHBOARD = {
         "Research CSV import",
         "Margin calculator",
         "Compliance gate"
+      ]
+    },
+    {
+      "id": "marketing",
+      "label": "Marketing",
+      "color": "#f472b6",
+      "agents": [
+        "marketing"
+      ],
+      "tools": [
+        "Content calendar",
+        "Ad budget (100 GBP a month)",
+        "Engagement figures"
       ]
     },
     {
@@ -694,18 +898,43 @@ window.DASHBOARD = {
     ]
   },
   "brain": {
-    "count": 15,
+    "count": 41,
     "notes": [
       "sops/analytics.md",
       "sops/compliance.md",
+      "sops/departments/company.md",
+      "sops/departments/compliance.md",
+      "sops/departments/customer-care.md",
+      "sops/departments/finance.md",
+      "sops/departments/marketing.md",
+      "sops/departments/monitoring.md",
+      "sops/departments/operations.md",
+      "sops/departments/research.md",
+      "sops/departments/sales.md",
+      "sops/departments/tech-support.md",
+      "sops/facebook.md",
       "sops/finance.md",
+      "sops/instagram.md",
       "sops/inventory.md",
       "sops/listings.md",
+      "sops/marketing.md",
       "sops/messages.md",
       "sops/monitor.md",
       "sops/orchestrator.md",
       "sops/orders.md",
+      "sops/pinterest.md",
       "sops/pricing.md",
+      "sops/procedures/complaint-or-safety-incident.md",
+      "sops/procedures/customer-data-request.md",
+      "sops/procedures/data-breach.md",
+      "sops/procedures/late-parcel.md",
+      "sops/procedures/month-end-close.md",
+      "sops/procedures/new-product-launch.md",
+      "sops/procedures/order-to-delivery.md",
+      "sops/procedures/return-and-refund.md",
+      "sops/procedures/social-post-approval.md",
+      "sops/procedures/supplier-price-rise.md",
+      "sops/procedures/weekly-owner-review.md",
       "sops/research.md",
       "sops/returns.md",
       "sops/reviewer.md",

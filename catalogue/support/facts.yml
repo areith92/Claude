@@ -1,0 +1,9 @@
+# Facts the reply templates use. Fill these in (by pull request) with what is TRUE for your business. A template that needs an empty fact is never ready to send.
+business_name: null            # e.g. "Acme Home"
+delivery_estimate_text: null   # e.g. "arrive within 3 to 5 working days of dispatch"
+courier_or_supplier_text: null # e.g. "our courier"
+reply_time_text: null          # e.g. "one working day"
+return_window_days: null       # e.g. 30
+return_postage_text: null      # e.g. "Return postage is paid by the buyer unless the item is faulty"
+price_policy_text: null        # e.g. "set to give fair value, so we do not price match"
+payment_help_text: null        # e.g. "If you were charged twice, send us your order number and we will check straight away"

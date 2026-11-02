@@ -1,0 +1,16 @@
+# Words that sort a message into a category. First match wins on ties, in this order. Plain lower-case phrases.
+order: [safety, legal, abuse, spam, delivery_delay, return_refund, complaint, order_status, payment, price_discount, product_question, praise]
+categories:
+  safety: [injured, injury, burn, burnt, burned, fire, electric shock, shocked, allergic, allergy, rash, choking, choked, hospital, unsafe, dangerous, overheat, exploded, smoke, sparks, poisoned]
+  legal: [solicitor, lawyer, trading standards, sue you, court, chargeback, dispute, paypal claim, ombudsman, gdpr, data protection, subject access, information commissioner, journalist, press enquiry, legal action]
+  abuse: [kill you, i will find you, hate you, scammers, bunch of thieves, you idiots, piece of, f off]
+  spam: [followers, crypto, investment, loan, whatsapp me, dm me for, promote your, boost your, giveaway winner, click the link, earn money]
+  delivery_delay: [not arrived, hasn't arrived, hasnt arrived, still waiting, taking too long, been waiting, delayed, late delivery, where is my parcel, missing parcel, never came, not received, lost in the post]
+  return_refund: [refund, money back, return, send it back, send back, exchange, cancel my order, cancellation, replace]
+  complaint: [broken, damaged, faulty, not as described, poor quality, disappointed, rubbish, terrible, fake, doesn't work, doesnt work, stopped working, awful, ripped off]
+  order_status: [where is my order, order status, tracking, tracking number, has it shipped, been dispatched, dispatched, confirmation, when will it arrive, when will my order]
+  payment: [payment, charged, charged twice, card was, invoice, receipt, vat, billing]
+  price_discount: [discount, price match, cheaper, coupon, promo code, voucher, offer, on sale, free shipping, free delivery]
+  product_question: [size, dimensions, colour, color, material, compatible, does it come, does it fit, how do i, how to use, what is it made, in stock, available, how big, how long is, washable]
+  praise: [love it, love this, great, amazing, brilliant, perfect, fantastic, thank you, thanks so much, excellent, recommend]
+order_specific: [order_status, delivery_delay, return_refund, complaint, payment]

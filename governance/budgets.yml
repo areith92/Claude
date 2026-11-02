@@ -15,6 +15,11 @@ ai_costs:                  # 0 means no paid API use is allowed for that agent
     pricing: 0
     research: 0
     sourcing: 0
+    facebook: 0
+    instagram: 0
+    tiktok: 0
+    pinterest: 0
+    marketing: 0
     inventory: 0
     returns: 0
     analytics: 0
