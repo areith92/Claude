@@ -266,7 +266,7 @@ def build_context(inc):
     if files:
         lines += ["", "## Relevant files (current contents)"]
         for f in files:
-            lines += [f"### {f}", (ROOT / f).read_text()[:12000]]
+            lines += [f"### {f}", redact((ROOT / f).read_text()[:12000])]
     return "\n".join(lines) + "\n"
 
 
