@@ -191,6 +191,19 @@ class Flow(unittest.TestCase):
         self.assertTrue(any("fix ready" in a for a in data["alerts"]))
         self.assertIn("techsupport", [a["name"] for a in data["agents"]])
 
+    def test_files_with_personal_data_are_redacted_in_the_prompt(self):
+        (self.repo / "docs/contact.md").write_text("Notes\nEmail bob@example.com for help\nThe bug is here: broken\n")
+        subprocess.run(["git", "add", "-A"], cwd=self.repo, capture_output=True)
+        subprocess.run(["git", "commit", "-qm", "add notes"], cwd=self.repo, capture_output=True)
+        r = self.cli("raise", "--title", "Problem in a doc", "--details", "see docs/contact.md")
+        iid = self.queue()[0]["id"]
+        r = self.cli("run", iid, "--manual")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)  # the personal-data guard must not refuse the prompt
+        prompt = (self.repo / self.queue()[0]["prompt_file"]).read_text()
+        self.assertNotIn("bob@example.com", prompt)
+        self.assertIn("[line removed: looks like personal data]", prompt)
+        self.assertIn("The bug is here: broken", prompt)
+
     def test_health_checks_run(self):
         self.assertEqual(subprocess.run([sys.executable, "scripts/monitor_checks.py"], cwd=self.repo, capture_output=True, text=True, env=self.env).returncode, 1)
         (self.repo / "docs/example.yml").write_text("a: [1, 2]\n")

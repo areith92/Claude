@@ -9,10 +9,13 @@ incidents:
   evidence: 'POSSIBLE SECRET in tests/test_techsupport.py
 
     1 file(s) flagged'
-  status: raised
+  status: resolved
   attempts: 0
   occurrences: 1
   history:
   - date: '2026-11-02'
     status: raised
     note: Raised by monitor
+  - date: '2026-11-02'
+    status: resolved
+    note: 'Verified after the fix was pulled: secrets ok'
