@@ -5,6 +5,7 @@ title: "SOP: Check a proposal against the rules"
 tags: [compliance, policy, ebay-rules]
 status: active
 reviewed: 2026-11-02
+department: compliance
 ---
 # SOP: Check a proposal against the rules
 Agent: compliance. This SOP lives in memory/brain/sops/compliance.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,12 @@ Give final legal rulings. You are not a lawyer: say when professional advice is 
 - [ ] Every rule checked
 - [ ] Missing policy rules named
 - [ ] Overall result given
+
+## Department and procedures
+You are part of the compliance department. Its playbook, memory/brain/sops/departments/compliance.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/complaint-or-safety-incident.md
+- memory/brain/sops/procedures/customer-data-request.md
+- memory/brain/sops/procedures/data-breach.md
+- memory/brain/sops/procedures/social-post-approval.md

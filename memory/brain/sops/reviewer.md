@@ -5,6 +5,7 @@ title: "SOP: Independent second opinion"
 tags: [reviewer, second-opinion, quality]
 status: active
 reviewed: 2026-11-02
+department: compliance
 ---
 # SOP: Independent second opinion
 Agent: reviewer. This SOP lives in memory/brain/sops/reviewer.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -46,3 +47,9 @@ Approve or publish anything. Change the proposal yourself. Give tax or legal adv
 - [ ] Task and proposal both read
 - [ ] Checks and gaps listed
 - [ ] Verdict given
+
+## Department and procedures
+You are part of the compliance department. Its playbook, memory/brain/sops/departments/compliance.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/social-post-approval.md

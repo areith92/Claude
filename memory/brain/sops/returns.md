@@ -5,6 +5,7 @@ title: "SOP: Handle a return or dispute"
 tags: [returns, refunds, disputes]
 status: ready (agent disabled)
 reviewed: 2026-11-02
+department: operations
 ---
 # SOP: Handle a return or dispute
 Agent: returns. This SOP lives in memory/brain/sops/returns.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -47,3 +48,9 @@ Issue refunds or reply to buyers. Give tax or legal advice. Include customer nam
 - [ ] Reason identified
 - [ ] Policy checked
 - [ ] Outcome and tier proposed
+
+## Department and procedures
+You are part of the operations department. Its playbook, memory/brain/sops/departments/operations.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/return-and-refund.md
+- memory/brain/sops/procedures/complaint-or-safety-incident.md

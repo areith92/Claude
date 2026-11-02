@@ -615,10 +615,68 @@
     return [head("product research", "APPROVALS"), box];
   }
 
+  /* ---------- operations: alerts, parcels, profit and loss, social and shop figures (needs scripts/dashboard_server.py) ---------- */
+  let OPS = null;
+  function opsBadge() {
+    const n = OPS ? OPS.alerts.filter(function (a) { return a.status === "open"; }).length : 0, el = document.getElementById("ops-badge");
+    if (el) { el.textContent = n ? String(n) : ""; el.style.display = n ? "inline-block" : "none"; }
+  }
+  function loadOps() {
+    return fetch("/api/ops", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) { OPS = j.error ? null : j; opsBadge(); return OPS; }).catch(function () { OPS = null; return null; });
+  }
+  const sevColour = { critical: "#ff4d6d", warning: "#fbbf24", info: "#38bdf8" };
+  const pct = function (n) { return (n == null ? "—" : n) + "%"; };
+  function opsBody(o) {
+    if (!o) {
+      return [h("div", { class: "banner stopped" }, h("b", null, "The operations figures need the dashboard server.")),
+        h("p", { class: "empty" }, "Stop the current server (Ctrl+C) and run this instead:"), copyBtn("python3 scripts/dashboard_server.py", "Copy command")];
+    }
+    const noop = function () {}, fun = o.funnel, open = o.alerts.filter(function (a) { return a.status === "open"; });
+    const alerts = o.alerts.length ? o.alerts.map(function (a) {
+      const ack = function (status) { post("/api/alert", { id: a.id, status: status }).then(function () { loadOps().then(render); }); };
+      return h("div", { class: "check" }, h("span", { class: "dot off", style: "background:" + sevColour[a.severity] }),
+        h("div", { style: "flex:1" }, h("b", null, a.severity.toUpperCase() + " · " + a.kind.replace(/_/g, " ") + (a.status === "acknowledged" ? " · acknowledged" : "")), h("small", null, a.message)),
+        a.status === "open" ? h("button", { class: "btn", type: "button", onclick: function () { ack("acknowledged"); } }, "Acknowledge") : null,
+        h("button", { class: "btn", type: "button", onclick: function () { ack("closed"); } }, "Close"));
+    }) : h("p", { class: "empty" }, "Nothing needs you right now.");
+    const weeks = o.pnl.weekly.slice().reverse(), thisWeek = weeks[0] || { spend: 0, revenue: 0, refunds: 0, profit: 0 };
+    return [h("div", { class: "grid stats" },
+        stat("OPEN ALERTS", String(open.length), open.filter(function (a) { return a.severity === "critical"; }).length + " critical", open.length ? "warn" : ""),
+        stat("PARCELS LATE", String(o.shipments.filter(function (s) { return s.days_late > 0; }).length), "of " + o.shipments.filter(function (s) { return s.status !== "delivered"; }).length + " on the way"),
+        stat("THIS WEEK PROFIT", gbp(thisWeek.profit), "spent " + gbp(thisWeek.spend) + " · earned " + gbp(thisWeek.revenue - thisWeek.refunds), thisWeek.profit < 0 ? "bad" : ""),
+        stat("CART ABANDONMENT", pct(fun.abandonment_pct), fun.abandoned_checkouts + " of " + fun.checkouts + " checkouts · last " + o.window_days + " days")),
+      panel("ALERTS · WHAT NEEDS YOU", h("div", null, alerts)),
+      panel("DELIVERIES · CHECKED EVERY DAY", table(["Parcel", "Order", "Carrier", "Tracking", "Due", "Status", "Late"],
+        o.shipments.map(function (s) { return { data: s, cells: [s.id, s.order_id, s.carrier || "—", s.tracking_no || "none", s.due || "—", s.status.replace(/_/g, " "), s.days_late ? s.days_late + " day(s)" : ""] }; }), noop, "No parcels recorded yet.")),
+      panel("PROFIT AND LOSS · WEEK BY WEEK", table(["Week from", "Orders", "Earned", "Spent", "Profit", "Ads", "AI"],
+        weeks.map(function (w) { return { data: w, cells: [w.week_start, String(w.orders), gbp(w.revenue - w.refunds), gbp(w.spend), gbp(w.profit), gbp(w.ads), gbp(w.ai)] }; }), noop, "No orders yet."),
+        h("p", { class: "empty" }, "Earned is sales minus refunds. Spent is supplier cost, postage, fees, ads and AI." + (o.pnl.fees_estimated_orders ? " Fees were estimated for " + o.pnl.fees_estimated_orders + " order(s) from placeholder rates." : ""))),
+      panel("PROFIT AND LOSS · DAY BY DAY", table(["Date", "Orders", "Revenue", "Costs", "Profit"],
+        o.pnl.daily.slice().reverse().map(function (d) { return { data: d, cells: [d.date, String(d.orders), gbp(d.revenue), gbp(d.cogs + d.fees + d.ads + d.ai), gbp(d.profit)] }; }), noop, "No data.")),
+      panel("PRICE WATCH · SUPPLIER COST AGAINST YOUR MARGIN", table(["Product", "Channel", "Price", "Cost now", "Margin", ""],
+        o.listings.map(function (l) { return { data: l, cells: [l.title || l.product_id, l.channel, gbp(l.price_gbp), gbp(l.cost_now_gbp) + (l.cost_now_gbp > l.cost_assumed_gbp ? " (was " + gbp(l.cost_assumed_gbp) + ")" : ""), pct(l.margin_pct), l.ok ? "OK" : "BELOW " + o.min_margin_pct + "%"] }; }), noop, "No live listings recorded yet.")),
+      panel("SOCIAL ENGAGEMENT · LAST " + o.window_days + " DAYS", table(["Platform", "Posts", "Impressions", "Reach", "Likes", "Comments", "Shares", "Saves", "Clicks", "Engagement"],
+        o.social.map(function (s) { return { data: s, cells: [s.platform, String(s.posts), String(s.impressions), String(s.reach), String(s.likes), String(s.comments), String(s.shares), String(s.saves), String(s.clicks), pct(s.engagement_pct)] }; }), noop, "No social figures yet. Import a platform export: python3 scripts/watch.py metrics import FILE.csv")),
+      panel("SHOP · SESSIONS TO ORDERS · LAST " + o.window_days + " DAYS", h("div", { class: "grid stats" },
+        stat("SESSIONS", String(fun.sessions), ""), stat("ADDED TO CART", String(fun.carts), ""), stat("STARTED CHECKOUT", String(fun.checkouts), ""), stat("ORDERS", String(fun.orders), pct(fun.conversion_pct) + " of sessions"),
+        stat("ABANDONED", String(fun.abandoned_checkouts), pct(fun.abandonment_pct) + " of checkouts", fun.abandonment_pct > 70 ? "warn" : ""), stat("REVENUE", gbp(fun.revenue_gbp), "from the shop"))),
+      panel("CUSTOMER MESSAGES · DRAFTS WAITING FOR YOU", h("div", null,
+        h("p", { class: "empty" }, o.inbox.awaiting_approval + " draft(s) waiting · " + (o.inbox.needs_reply || 0) + " with no template · " + o.inbox.escalated + " escalated · " + o.inbox.open + " open. Approve with: python3 scripts/inbox.py approve ID"),
+        o.inbox.items.length ? o.inbox.items.map(function (i) {
+          return h("div", { class: "decision" }, h("b", null, i.platform + " " + i.kind + " · " + i.category), h("div", { class: "empty" }, "Customer: " + i.message), h("div", null, i.draft ? "Draft: " + i.draft : i.reason),
+            i.missing_facts.length ? pill("needs facts: " + i.missing_facts.join(", "), "warn") : i.draft ? pill("ready for your approval", "ok") : pill("needs a reply written", "warn"), h("div", { class: "empty mono" }, i.id));
+        }) : null))];
+  }
+  function opsPage() {
+    const box = h("div", null, h("p", { class: "empty" }, "Loading..."));
+    loadOps().then(function (o) { box.replaceChildren.apply(box, opsBody(o).filter(Boolean)); });
+    return [head("deliveries, money and customers", "OPERATIONS"), box];
+  }
+
   /* ---------- shell ---------- */
-  const NAV = [["OPERATE", [["home", "Home"], ["approvals", "Approvals"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
+  const NAV = [["OPERATE", [["home", "Home"], ["approvals", "Approvals"], ["ops", "Operations"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
     ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["connections", "Connections"], ["roadmap", "Roadmap"]]]];
-  const PAGES = { home: home, tasks: tasksPage, approvals: approvalsPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
+  const PAGES = { home: home, tasks: tasksPage, approvals: approvalsPage, ops: opsPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
 
   function side(active) {
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
@@ -627,7 +685,7 @@
       nav.append(h("div", { class: "navh" }, g[0]));
       g[1].forEach(function (p) {
         nav.append(h("a", { href: "#" + p[0], class: p[0] === active ? "on" : "" }, p[1],
-          p[0] === "approvals" ? h("span", { class: "nav-badge", id: "appr-badge", style: "display:none" }) : null));
+          p[0] === "approvals" ? h("span", { class: "nav-badge", id: "appr-badge", style: "display:none" }) : p[0] === "ops" ? h("span", { class: "nav-badge", id: "ops-badge", style: "display:none" }) : null));
       });
     });
     document.getElementById("side").replaceChildren(
@@ -647,4 +705,5 @@
   window.addEventListener("hashchange", render);
   render();
   loadResearch();
+  loadOps();
 })();

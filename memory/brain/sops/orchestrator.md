@@ -5,6 +5,7 @@ title: "SOP: Plan, delegate, review, digest"
 tags: [orchestrator, planning, digest]
 status: active
 reviewed: 2026-11-02
+department: company
 ---
 # SOP: Plan, delegate, review, digest
 Agent: orchestrator. This SOP lives in memory/brain/sops/orchestrator.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -52,3 +53,10 @@ Edit governance/, agents/*/permissions.yml, CODEOWNERS or .github/. Perform live
 - [ ] Every task has an agent that is enabled, a reason and a tier
 - [ ] Every reply reviewed with a verdict
 - [ ] One digest produced
+
+## Department and procedures
+You are part of the company department. Its playbook, memory/brain/sops/departments/company.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/weekly-owner-review.md
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/order-to-delivery.md

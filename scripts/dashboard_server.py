@@ -15,6 +15,8 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import research  # noqa: E402
 from check_budget import ROOT  # noqa: E402
+import watch  # noqa: E402
+from store import open_store  # noqa: E402
 
 DASH = ROOT / "dashboard"
 TOKEN = secrets.token_urlsafe(24)
@@ -40,6 +42,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         p = urllib.parse.unquote(self.path.split("?")[0])
         if p == "/api/research":
             return self.reply(200, research.api_state())
+        if p == "/api/ops":
+            try:
+                return self.reply(200, watch.summary())
+            except Exception as exc:  # a store problem should show on the page, not crash the server
+                return self.reply(500, {"error": str(exc)[:200]})
         if p == "/api/token":
             return self.reply(200, {"token": TOKEN})
         if p.startswith("/research/images/"):
@@ -68,6 +75,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self.reply(400, {"ok": False, "message": "decision must be approved or denied"})
                 ok, msg = research.decide(body["id"], body["decision"], str(body.get("reason", ""))[:500], bool(body.get("acknowledge")))
                 return self.reply(200 if ok else 409, {"ok": ok, "message": msg})
+            if self.path == "/api/alert":
+                if body.get("status") not in ("acknowledged", "closed"):
+                    return self.reply(400, {"ok": False, "message": "status must be acknowledged or closed"})
+                n = open_store().update("alerts", {"id": int(body["id"])}, {"status": body["status"]})
+                return self.reply(200, {"ok": bool(n), "message": "Saved." if n else "No such alert."})
             if self.path == "/api/confirm":
                 research.set_confirm(body["id"], body["field"], body.get("value"))
                 return self.reply(200, {"ok": True, "message": "Saved."})

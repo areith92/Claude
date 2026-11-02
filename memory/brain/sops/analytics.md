@@ -5,6 +5,7 @@ title: "SOP: Margin per product and dashboard data"
 tags: [analytics, margin, reports]
 status: ready (agent disabled)
 reviewed: 2026-11-02
+department: finance
 ---
 # SOP: Margin per product and dashboard data
 Agent: analytics. This SOP lives in memory/brain/sops/analytics.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -46,3 +47,9 @@ Change catalogue data or prices. Give tax or legal advice. Include customer name
 - [ ] Margin shown for every product with data
 - [ ] Missing data listed
 - [ ] Fee assumption caveat given
+
+## Department and procedures
+You are part of the finance department. Its playbook, memory/brain/sops/departments/finance.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/month-end-close.md
+- memory/brain/sops/procedures/weekly-owner-review.md

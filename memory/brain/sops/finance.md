@@ -5,6 +5,7 @@ title: "SOP: Reconcile and prepare the accountant pack"
 tags: [finance, accounts, accountant]
 status: active
 reviewed: 2026-11-02
+department: finance
 ---
 # SOP: Reconcile and prepare the accountant pack
 Agent: finance. This SOP lives in memory/brain/sops/finance.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,9 @@ Move money or touch bank or card details. Decide tax treatment. Give tax or lega
 - [ ] Totals tie out or differences are explained
 - [ ] Accountant questions listed
 - [ ] Checklist updated
+
+## Department and procedures
+You are part of the finance department. Its playbook, memory/brain/sops/departments/finance.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/month-end-close.md
+- memory/brain/sops/procedures/return-and-refund.md

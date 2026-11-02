@@ -1,0 +1,6 @@
+# 0009: Operations watch and social customer care
+Decision: a daily watch checks every parcel against the delivery time the supplier or courier promised, and every supplier price against the margin you assumed. A parcel past its promise raises an alert (critical from 3 days late), and a price rise that drops a margin below the minimum raises one too. A paid order the supplier has not been given yet is flagged if the new cost would make it lose money.
+Alerts are stored in the database and also open a GitHub issue that mentions the owner, so GitHub emails you. The daily job fails loudly if the database keys are missing, so a silent gap cannot happen.
+Customer messages from every platform pass through scripts/inbox.py: personal data is removed, the message is sorted, and a reply is drafted from templates that only use facts the owner has filled in. Nothing is sent automatically. Safety, legal and abuse messages go straight to the owner as alerts. Refunds, complaints and delivery problems are never auto-sent.
+Each platform has its own agent and SOP (facebook, instagram, tiktok, pinterest) and a marketing agent plans content and proposes campaigns inside the monthly ad cap. No agent publishes, spends or sends.
+Platform connections (Meta, TikTok, Pinterest) and tracking providers come later, one at a time. Until then data arrives by export or by hand.

@@ -5,6 +5,7 @@ title: "SOP: Review new orders and shipping"
 tags: [orders, shipping, delivery]
 status: active
 reviewed: 2026-11-02
+department: operations
 ---
 # SOP: Review new orders and shipping
 Agent: orders. This SOP lives in memory/brain/sops/orders.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -47,3 +48,10 @@ Buy postage or book collections. Contact buyers or carriers. Give tax or legal a
 - [ ] Every order has a shipping proposal or a flag
 - [ ] Deadlines shown
 - [ ] No personal data
+
+## Department and procedures
+You are part of the operations department. Its playbook, memory/brain/sops/departments/operations.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/order-to-delivery.md
+- memory/brain/sops/procedures/late-parcel.md
+- memory/brain/sops/procedures/supplier-price-rise.md

@@ -11,3 +11,6 @@
 - Tech Support incidents live in operations/incidents/. Use scripts/techsupport.py. Never push or merge a fix yourself, and never change owner-only files unless the owner passes --include-owner-files.
 - Your SOP is memory/brain/sops/<your agent>.md. scripts/run_agent.py adds it to your prompt. Follow it step by step. Company rules, governance/ and the approval tiers win if they conflict.
 - Product research runs through scripts/research.py. Never scrape eBay or AliExpress, never suggest buying from a marketplace to ship straight to an eBay buyer, and never publish saved competitor or supplier images. Margins come from scripts/margin.py, not from an AI.
+- Customer messages go through scripts/inbox.py so personal data is removed first. Nothing is sent automatically, and safety, legal and abuse messages are always escalated. Parcels and supplier prices are checked daily by scripts/watch.py; never silence an alert by editing the data.
+- Customer personal data is never stored in the repo, local files, logs, memory notes, GitHub issues or prompts. See docs/privacy/ and governance/privacy.yml.
+- Customer personal data is never stored in the repo, local files, logs, memory notes, GitHub issues or prompts. See docs/privacy/ and governance/privacy.yml.

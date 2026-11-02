@@ -26,6 +26,33 @@ python3 scripts/brain_search.py "your question" --agent listings
 | research | Find and rank product opportunities | active |
 | sourcing | Check suppliers and fulfilment model | active |
 
+## Department playbooks
+One playbook per department in memory/brain/sops/departments/: the daily, weekly and monthly routine, the commands to use, handoffs, escalation and measures. scripts/run_agent.py adds an agent's department playbook to its prompt.
+- company: Company routine: the owner and the orchestrator
+- sales: Sales department playbook
+- operations: Operations department playbook
+- customer-care: Customer care department playbook
+- finance: Finance department playbook
+- compliance: Compliance department playbook
+- monitoring: Monitoring department playbook
+- tech-support: Tech support department playbook
+- research: Research department playbook
+- marketing: Marketing department playbook
+
+## Procedures across departments
+Step-by-step procedures in memory/brain/sops/procedures/. Agents and people follow them when the trigger happens.
+- new-product-launch: New product launch
+- order-to-delivery: Order to delivery
+- late-parcel: Late or missing parcel
+- supplier-price-rise: Supplier price rise
+- return-and-refund: Return and refund
+- complaint-or-safety-incident: Complaint or safety incident
+- customer-data-request: Customer data request
+- data-breach: Data breach
+- month-end-close: Month-end close
+- weekly-owner-review: Weekly owner review
+- social-post-approval: Social post approval
+
 ## Changing a SOP
 Edit the file and open a pull request. The tests check that every agent in governance/status.yml has a SOP with these headings:
 Purpose, When to use, Inputs, Steps, Output, Approval tier, Escalate to the owner, Never, Done when.

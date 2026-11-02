@@ -5,6 +5,7 @@ title: "SOP: Diagnose and fix a failing check"
 tags: [techsupport, incidents, fixes]
 status: active
 reviewed: 2026-11-02
+department: tech-support
 ---
 # SOP: Diagnose and fix a failing check
 Agent: techsupport. This SOP lives in memory/brain/sops/techsupport.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -50,3 +51,9 @@ Push or merge. Touch logs/, inbox/, outbox/, reports/, operations/, memory/ or s
 - [ ] Smallest fix proposed
 - [ ] Nothing weakened
 - [ ] Owner-only files flagged
+
+## Department and procedures
+You are part of the tech-support department. Its playbook, memory/brain/sops/departments/tech-support.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/data-breach.md
+- memory/brain/sops/procedures/weekly-owner-review.md

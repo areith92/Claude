@@ -5,6 +5,7 @@ title: "SOP: Track stock and propose reorders"
 tags: [inventory, stock, suppliers]
 status: ready (agent disabled)
 reviewed: 2026-11-02
+department: operations
 ---
 # SOP: Track stock and propose reorders
 Agent: inventory. This SOP lives in memory/brain/sops/inventory.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,9 @@ Place orders or pay suppliers. Contact suppliers. Give tax or legal advice. Incl
 - [ ] Numbers shown
 - [ ] Assumptions stated
 - [ ] Approvals flagged
+
+## Department and procedures
+You are part of the operations department. Its playbook, memory/brain/sops/departments/operations.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/order-to-delivery.md
+- memory/brain/sops/procedures/supplier-price-rise.md
