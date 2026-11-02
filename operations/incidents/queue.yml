@@ -19,3 +19,17 @@ incidents:
   - date: '2026-11-02'
     status: resolved
     note: 'Verified after the fix was pulled: secrets ok'
+- id: INC-20261102-002
+  created: '2026-11-02'
+  source: owner
+  check: manual
+  title: '...'
+  severity: medium
+  evidence: '...'
+  status: raised
+  attempts: 0
+  occurrences: 1
+  history:
+  - date: '2026-11-02'
+    status: raised
+    note: Raised by owner
