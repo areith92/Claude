@@ -41,7 +41,9 @@
       "cap_gbp": 1
     }
   ],
-  "alerts": [],
+  "alerts": [
+    "Tech Support: 1 open incident(s)."
+  ],
   "queue": {},
   "latest_digest": null,
   "recent_costs": [],
@@ -352,5 +354,44 @@
     "count": 0,
     "notes": []
   },
-  "incidents": []
+  "incidents": [
+    {
+      "id": "INC-20261102-001",
+      "created": "2026-11-02",
+      "title": "Check failing: No secrets in tracked files",
+      "severity": "high",
+      "check": "secrets",
+      "status": "raised",
+      "stage": 2,
+      "evidence": "POSSIBLE SECRET in tests/test_techsupport.py\n1 file(s) flagged",
+      "diagnosis": "",
+      "root_cause": "",
+      "fix": null,
+      "test": null,
+      "live": null,
+      "branch": "",
+      "attempts": 0,
+      "history": [
+        {
+          "date": "2026-11-02",
+          "status": "raised",
+          "note": "Raised by monitor"
+        }
+      ],
+      "next": [
+        {
+          "label": "Let Tech Support fix it (uses your Claude key)",
+          "cmd": "python3 scripts/techsupport.py run INC-20261102-001"
+        },
+        {
+          "label": "Or the free route: prepare a prompt to paste into Claude",
+          "cmd": "python3 scripts/techsupport.py run INC-20261102-001 --manual"
+        },
+        {
+          "label": "Or give up on it",
+          "cmd": "python3 scripts/techsupport.py abandon INC-20261102-001 --reason \"why\""
+        }
+      ]
+    }
+  ]
 }
