@@ -23,6 +23,8 @@ python3 scripts/brain_search.py "your question" --agent listings
 | returns | Handle a return or dispute | ready (agent disabled) |
 | analytics | Margin per product and dashboard data | ready (agent disabled) |
 | techsupport | Diagnose and fix a failing check | active |
+| research | Find and rank product opportunities | active |
+| sourcing | Check suppliers and fulfilment model | active |
 
 ## Changing a SOP
 Edit the file and open a pull request. The tests check that every agent in governance/status.yml has a SOP with these headings:

@@ -1,0 +1,19 @@
+# PLACEHOLDER VALUES. Replace them with the figures on your own fee statements, then set confirmed: true.
+# They are deliberately on the high side, so margins are not flattered. Unconfirmed fees always raise a flag.
+channels:
+  ebay-uk:
+    confirmed: false
+    final_value_fee_pct: 15.0        # of the total the buyer pays
+    fixed_fee_gbp: 0.40              # per order
+    promoted_listing_pct: 3.0        # assumed advertising rate; set 0 if you do not promote
+  social:
+    confirmed: false
+    platform_commission_pct: 8.0     # if you sell through a platform shop; 0 for your own checkout link
+    payment_fee_pct: 2.0
+    payment_fixed_gbp: 0.25
+common:
+  returns_allowance_pct: 5.0         # share of sales assumed lost to returns and refunds
+  packaging_gbp: 0.50                # only for stock you hold and ship yourself
+  vat_registered: false
+  vat_rate_pct: 20
+  import_duty_pct: 0                 # share of item cost; ask your accountant or the supplier

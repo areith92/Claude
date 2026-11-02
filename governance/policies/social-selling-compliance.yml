@@ -1,0 +1,72 @@
+# UK rules for selling through social media, as checks the code can run. A DRAFT for the owner to confirm with Trading Standards guidance,
+# the ASA (CAP Code) and each platform's own commerce policy. Selling on social is not rule-free: UK law applies, and so do the platform rules.
+channel: social
+reviewed: 2026-11-02
+review_every_days: 90
+confirmed_by_owner: false
+rules:
+  - id: SOC-LAW-1
+    title: Clear trader identity, total price and delivery terms before the buyer pays
+    severity: flag
+    check: {type: field_true, field: pre_contract_info_ok}
+    why: The Consumer Contracts Regulations require clear information up front, including who you are, the total price with delivery, and the cancellation right.
+  - id: SOC-LAW-2
+    title: 14-day cancellation and returns handling in place
+    severity: flag
+    check: {type: field_true, field: returns_process_ok}
+    why: Distance sales normally carry a 14-day cancellation right. Decide who pays return postage and say so clearly.
+  - id: SOC-LAW-3
+    title: Deliver within the time you state (30 days at most unless agreed)
+    severity: flag
+    check: {type: field_true, field: delivery_promise_checked}
+    why: Goods must arrive within the agreed time, or 30 days by default. Slow supplier delivery is your responsibility.
+  - id: SOC-ASA-1
+    title: Adverts and posts follow the CAP Code
+    severity: flag
+    check: {type: field_true, field: ad_claims_checked}
+    why: No misleading claims, prices or reviews. Paid promotion and gifted products must be clearly labelled (for example #ad).
+  - id: SOC-ITEM-1
+    title: No prohibited items (cars and car parts are excluded by your own rule)
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: banned_keywords}
+    why: Banned keywords from catalogue/research.yml, plus anything the platform's commerce policy forbids.
+  - id: SOC-ITEM-2
+    title: Restricted-type products need documents or checks
+    severity: flag
+    check: {type: keywords_absent, fields: [keyword, title, category], list: restricted_keywords}
+    why: Batteries, electricals, toys, baby products, cosmetics and supplements need safety documents and often platform approval.
+  - id: SOC-IP-1
+    title: Brand and lookalike risk
+    severity: flag
+    check: {type: field_empty_or_true, field: brand_authorised, empty_field: brand}
+    why: Branded goods need proof you may sell them. Lookalikes can lead to takedowns and account action.
+  - id: SOC-IMG-1
+    title: Images must be yours or licensed
+    severity: flag
+    check: {type: images_rights}
+    why: Copied photos can infringe copyright, and platforms act on complaints.
+  - id: SOC-SAFE-1
+    title: UK product safety documents
+    severity: flag
+    check: {type: field_true, field: safety_docs_ok}
+    why: Goods sold in the UK must be safe and carry the right marking where it applies.
+  - id: SOC-PLAT-1
+    title: Platform shop rules checked
+    severity: flag
+    check: {type: field_true, field: platform_policy_checked}
+    why: Facebook and Instagram Shops, TikTok Shop and similar have their own seller rules, including drop shipping and delivery times.
+  - id: SOC-FEE-1
+    title: Fee figures confirmed
+    severity: flag
+    check: {type: fees_confirmed}
+    why: Margins are only as good as the fee figures in catalogue/fees.yml.
+  - id: SOC-MARGIN-1
+    title: Margin still above the minimum if costs rise
+    severity: flag
+    check: {type: stress_margin_ok}
+    why: A small cost rise would take this product under your minimum margin.
+  - id: SOC-DATA-1
+    title: Research data is fresh
+    severity: block
+    check: {type: fresh}
+    why: Prices and stock change. Re-check the data before approving.

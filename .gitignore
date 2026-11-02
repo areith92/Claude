@@ -2,6 +2,10 @@
 .env.*
 !.env.example
 __pycache__/
+research/dossiers/
+research/images/
+research/approved/
+research/exports/
 *.pyc
 .DS_Store
 .venv/
