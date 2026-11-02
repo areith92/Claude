@@ -5,6 +5,7 @@ title: "SOP: Propose a price change"
 tags: [pricing, margin, prices]
 status: ready (agent disabled)
 reviewed: 2026-11-02
+department: sales
 ---
 # SOP: Propose a price change
 Agent: pricing. This SOP lives in memory/brain/sops/pricing.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,9 @@ Change prices directly. Propose a price below cost. Give tax or legal advice. In
 - [ ] Working shown
 - [ ] Rules respected
 - [ ] Tier stated for each change
+
+## Department and procedures
+You are part of the sales department. Its playbook, memory/brain/sops/departments/sales.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/supplier-price-rise.md

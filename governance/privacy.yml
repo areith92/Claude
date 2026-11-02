@@ -1,0 +1,18 @@
+# Privacy settings for customer personal data. Owner edits by pull request. DRAFT: confirm each figure with your accountant and the ICO guidance.
+# Not legal advice. Nothing here stores or sends any data by itself; it holds the rules the system will follow.
+confirmed_by_owner: false
+reviewed: 2026-11-02
+review_every_days: 180
+requests:
+  response_days: 30               # people usually have one month to get an answer to a request about their data
+  alert_days_before: 7            # the daily watch warns you this many days before a request is due
+retention:
+  order_records_years: 6          # the financial side of an order (amounts, dates, order ID): tax and accounting records. Your accountant confirms the period for your business type
+  customer_contact_after_last_order_months: 24   # then name, email, phone and addresses are anonymised; the order record stays
+  messages_months: 12             # redacted customer messages
+  consent_proof_years: 6          # proof that someone agreed to marketing, kept after they withdraw so you can show you honoured it
+marketing:
+  consent_wording_version: v1     # change this whenever the checkbox wording changes, so you know who agreed to which text
+  require_consent: true           # marketing emails and texts only to people with a recorded, current consent
+ai:
+  personal_data_to_ai_providers: false   # names, emails, phones and addresses never go into a prompt. Agents see customer references and order IDs only

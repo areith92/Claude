@@ -5,6 +5,7 @@ title: "SOP: Find and rank product opportunities"
 tags: [research, products, keywords]
 status: active
 reviewed: 2026-11-02
+department: research
 ---
 # SOP: Find and rank product opportunities
 Agent: research. This SOP lives in memory/brain/sops/research.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,8 @@ Scrape or browse. Pick banned categories. Give tax or legal advice. Include cust
 - [ ] Banned list respected
 - [ ] Reasons and risks given
 - [ ] Denied lessons checked
+
+## Department and procedures
+You are part of the research department. Its playbook, memory/brain/sops/departments/research.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md

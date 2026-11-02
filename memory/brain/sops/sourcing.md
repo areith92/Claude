@@ -5,6 +5,7 @@ title: "SOP: Check suppliers and fulfilment model"
 tags: [sourcing, suppliers, fulfilment]
 status: active
 reviewed: 2026-11-02
+department: research
 ---
 # SOP: Check suppliers and fulfilment model
 Agent: sourcing. This SOP lives in memory/brain/sops/sourcing.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,9 @@ Contact suppliers or place orders. Recommend marketplace-to-buyer shipping on eB
 - [ ] Fulfilment model checked
 - [ ] Delivery and cost risks stated
 - [ ] Verdict given
+
+## Department and procedures
+You are part of the research department. Its playbook, memory/brain/sops/departments/research.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/supplier-price-rise.md

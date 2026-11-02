@@ -5,6 +5,7 @@ title: "SOP: Draft an eBay UK listing"
 tags: [listings, ebay, drafts]
 status: active
 reviewed: 2026-11-02
+department: sales
 ---
 # SOP: Draft an eBay UK listing
 Agent: listings. This SOP lives in memory/brain/sops/listings.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -50,3 +51,9 @@ Publish or edit a live listing. Invent specifications, features or condition. Co
 - [ ] Every statement is backed by catalogue data
 - [ ] Missing fields are listed
 - [ ] Tier stated
+
+## Department and procedures
+You are part of the sales department. Its playbook, memory/brain/sops/departments/sales.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/new-product-launch.md
+- memory/brain/sops/procedures/supplier-price-rise.md

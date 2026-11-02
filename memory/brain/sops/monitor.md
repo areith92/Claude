@@ -5,6 +5,7 @@ title: "SOP: Watch spend, health and errors"
 tags: [monitor, health, budget]
 status: active
 reviewed: 2026-11-02
+department: monitoring
 ---
 # SOP: Watch spend, health and errors
 Agent: monitor. This SOP lives in memory/brain/sops/monitor.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -49,3 +50,10 @@ Raise or remove a cap yourself. Run live actions. Give tax or legal advice. Incl
 - [ ] Checks run
 - [ ] Open incidents listed
 - [ ] Spend position stated
+
+## Department and procedures
+You are part of the monitoring department. Its playbook, memory/brain/sops/departments/monitoring.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/late-parcel.md
+- memory/brain/sops/procedures/weekly-owner-review.md
+- memory/brain/sops/procedures/data-breach.md

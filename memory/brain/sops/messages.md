@@ -5,6 +5,7 @@ title: "SOP: Triage buyer messages and draft replies"
 tags: [messages, buyers, replies]
 status: active
 reviewed: 2026-11-02
+department: customer-care
 ---
 # SOP: Triage buyer messages and draft replies
 Agent: messages. This SOP lives in memory/brain/sops/messages.md and is added to every prompt for this agent automatically. Follow it step by step.
@@ -48,3 +49,11 @@ Send messages. Message buyers outside eBay. Promise refunds or compensation. Giv
 - [ ] Each message classified
 - [ ] Drafts reviewed for tone and accuracy
 - [ ] Escalations flagged
+
+## Department and procedures
+You are part of the customer-care department. Its playbook, memory/brain/sops/departments/customer-care.md, is added to your prompt automatically.
+Procedures you take part in:
+- memory/brain/sops/procedures/late-parcel.md
+- memory/brain/sops/procedures/return-and-refund.md
+- memory/brain/sops/procedures/complaint-or-safety-incident.md
+- memory/brain/sops/procedures/customer-data-request.md

@@ -58,3 +58,17 @@ The SOP never overrides company rules, governance/ or the approval tiers. Add su
 5. python3 scripts/research.py images P-...   saves image links as files for analysis only. Their rights stay unverified.
 Compliance: governance/policies/ebay-uk-compliance.yml and social-selling-compliance.yml are checked by scripts/policy_gate.py. A block cannot be approved; a flag needs your acknowledgement.
 Confirm the fee figures in catalogue/fees.yml (they are placeholders) and re-read the compliance files every 90 days.
+
+## Operations: parcels, supplier prices, money, customers
+Data goes in through short commands (or CSV exports) and is kept in your private Supabase database, or in operations/data/ if no keys are set. No customer names, addresses or emails: order IDs only.
+python3 scripts/watch.py order add --id O-1001 --date 2026-11-02 --channel ebay-uk --product P-1 --revenue 14.99 --cost 1.60 --shipping 0.80 --fees 2.70 --status new
+python3 scripts/watch.py ship add --order O-1001 --carrier "Royal Mail" --tracking AB123456789GB --shipped 2026-11-03 --promised-days 5 --supplier "Acme"
+python3 scripts/watch.py ship update S-... --status delivered|in_transit|exception --event "text"
+python3 scripts/watch.py listing add --product P-1 --title "Pet glove" --channel ebay-uk --price 14.99 --cost 1.60 --shipping 0.80   (what you sell and what you assumed it costs)
+python3 scripts/watch.py price import FILE.csv   new supplier prices, then: python3 scripts/watch.py scan
+python3 scripts/watch.py scan   checks every parcel against its promised delivery time and every supplier price against your margin; the Daily watch workflow does this every morning and opens an issue that mentions you
+python3 scripts/watch.py pnl    daily and weekly profit and loss   |   metrics import FILE | shop import FILE | spend add --date D --platform P --amount N
+python3 scripts/watch.py alerts [ack|close ID]
+Customer messages: python3 scripts/inbox.py add|import|list|prompt|approve. Personal data is removed first. Nothing is sent automatically (see governance/inbox.yml). Fill in catalogue/support/facts.yml so the reply templates are complete.
+See it all on the Operations page: python3 scripts/dashboard_server.py
+Daily watch on GitHub needs the repository secrets SUPABASE_URL and SUPABASE_SECRET_KEY, and the supabase/migrations/0002_ops.sql migration run in Supabase.
