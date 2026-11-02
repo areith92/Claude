@@ -1,2 +1,18 @@
 # Tech Support incident queue. Edited by scripts/techsupport.py. No personal data.
-incidents: []
+incidents:
+- id: INC-20261102-001
+  created: '2026-11-02'
+  source: monitor
+  check: secrets
+  title: 'Check failing: No secrets in tracked files'
+  severity: high
+  evidence: 'POSSIBLE SECRET in tests/test_techsupport.py
+
+    1 file(s) flagged'
+  status: raised
+  attempts: 0
+  occurrences: 1
+  history:
+  - date: '2026-11-02'
+    status: raised
+    note: Raised by monitor
