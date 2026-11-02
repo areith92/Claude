@@ -39,6 +39,22 @@ def role_of(agent):
     return " ".join(m.group(1).split()) if m else ""
 
 
+def sop_view(agent):
+    p = ROOT / "memory" / "brain" / "sops" / f"{agent}.md"
+    path = f"memory/brain/sops/{agent}.md"
+    if not p.exists():
+        return {"exists": False, "path": path}
+    secs = dict(re.findall(r"^## (.+?)\n(.*?)(?=^## |\Z)", p.read_text(), re.S | re.M))
+
+    def lines(k):
+        return [re.sub(r"^(\d+\.|-)\s*", "", ln).strip() for ln in secs.get(k, "").splitlines() if ln.strip()]
+
+    def para(k):
+        return " ".join(secs.get(k, "").split())
+    return {"exists": True, "path": path, "purpose": para("Purpose"), "steps": lines("Steps"), "tier": para("Approval tier"),
+            "escalate": lines("Escalate to the owner"), "never": para("Never")}
+
+
 STAGE_DONE = {"raised": 2, "diagnosing": 2, "fix_proposed": 3, "fix_failed": 3, "fix_tested": 4, "needs_owner": 4,
               "ready_to_ship": 6, "resolved": 7, "abandoned": 2}
 
@@ -109,7 +125,7 @@ def build():
     for name, cfg in agent_cfg.items():
         pref = (routing.get("agents") or {}).get(name, {}).get("preferred", "claude")
         agents.append({
-            "name": name, "role": role_of(name), "enabled": bool(cfg.get("enabled")),
+            "name": name, "role": role_of(name), "sop": sop_view(name), "enabled": bool(cfg.get("enabled")),
             "dept": "conductor" if name == conductor else dept_of.get(name, "unassigned"),
             "model": (models.get(pref) or {}).get("model", pref), "provider": pref,
             "mode": cfg.get("provider", status.get("provider", "manual")),
@@ -146,7 +162,8 @@ def build():
         {"id": "shopify", "name": "Shopify", "status": "enabled" if shop.get("enabled") else "not enabled",
          "detail": "Reserved for Phase 4. Needs owner and accountant approval."},
     ]
-    brain = sorted(p.name for p in (ROOT / "memory" / "brain").glob("*.md")) if (ROOT / "memory" / "brain").exists() else []
+    bdir = ROOT / "memory" / "brain"
+    brain = sorted(p.relative_to(bdir).as_posix() for p in bdir.rglob("*.md") if p.name != "README.md") if bdir.exists() else []
 
     iq = safe_yaml("operations/incidents/queue.yml")
     incidents = [incident_view(i) for i in (iq.get("incidents") or [])]

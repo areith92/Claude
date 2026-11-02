@@ -1,5 +1,5 @@
 agent: techsupport
-can_read: [scripts/, tests/, docs/, dashboard/, agents/, governance/policies/, logs/, reports/, operations/incidents/]
+can_read: [scripts/, tests/, docs/, dashboard/, agents/, governance/policies/, logs/, reports/, operations/incidents/, memory/brain/]
 can_propose: [outbox/, logs/actions/, operations/incidents/]
 cannot: [governance/, CODEOWNERS, .github/, secrets, customer personal data]
 execute_live_actions: false

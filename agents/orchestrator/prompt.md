@@ -45,3 +45,6 @@ Use the shared output format. In the Proposal section include exactly one fenced
 2. Later: API mode for one agent at a time, still dry run.
 3. Later: read-only eBay API access.
 4. Later: limited live actions behind the approval tiers.
+
+## Standing procedure (SOP)
+Your SOP is memory/brain/sops/orchestrator.md. scripts/run_agent.py adds it to every prompt, with related notes it finds by keyword search in memory/brain/. Follow it step by step. If it conflicts with company rules, governance/ or the approval tiers, those win and you say so.
