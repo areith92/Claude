@@ -364,8 +364,74 @@
         ],
         "never": "Change prices directly. Propose a price below cost. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
       },
-      "enabled": false,
+      "enabled": true,
       "dept": "sales",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "research",
+      "role": "Finds product opportunities for the UK. Chooses up to 20 search keywords (never cars or car parts), reads the market data the owner or an API provides, summarises bad-review themes and listing weaknesses, and ranks candidates. It does not browse or scrape: data comes in through scripts/research.py.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/research.md",
+        "purpose": "Choose where to look, make sense of the market data, and rank candidate products. You never browse or scrape: data arrives through scripts/research.py.",
+        "steps": [
+          "Read the banned list first. Never choose cars, car parts, vehicles or anything banned.",
+          "Choose up to 20 search keywords. Prefer small, light, durable items with steady demand, few safety rules and room for a 30 percent margin.",
+          "For each keyword say why it looks promising, what to look for in the results and the main risk.",
+          "Check the lessons from denied products and do not repeat them unless the reason no longer applies.",
+          "When data arrives, summarise demand (sold per month, number of competing listings) and note anything unreliable.",
+          "Group the bad-review themes and say what a better product or listing would do about each.",
+          "Rank the candidates and say which ones the rules rejected and why."
+        ],
+        "tier": "Research and ranking are auto. Nothing is bought or listed from here.",
+        "escalate": [
+          "Data that looks wrong or incomplete",
+          "A promising product that needs documents (safety, brand)",
+          "Any request to scrape a site"
+        ],
+        "never": "Scrape or browse. Pick banned categories. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "research",
+      "model": "gemini-3.8-flash",
+      "provider": "gemini",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0
+    },
+    {
+      "name": "sourcing",
+      "role": "Checks suppliers for the products that survive the rules: cost, shipping, delivery time, rating, minimum order, and the fulfilment model. Prefers stock you hold or a real wholesaler. Never proposes buying from a marketplace to ship straight to an eBay buyer.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/sourcing.md",
+        "purpose": "Check the supplier side of each product: cost, shipping, delivery time, reliability and, above all, a fulfilment model that follows the channel's rules.",
+        "steps": [
+          "Confirm the fulfilment model: hold_stock or wholesale_dropship are fine on eBay. Buying from a marketplace such as AliExpress to ship straight to an eBay buyer is not.",
+          "Check delivery time against the limit (5 days) and say how reliable the estimate looks.",
+          "Check cost and shipping against the margin: say what happens to margin if either rises.",
+          "Look at supplier rating, store age, order volume, minimum order and stock depth, using only what the dossier gives you.",
+          "For hold_stock, work out the real cost of a sample order first.",
+          "Name the risks (quality, delays, brand claims, safety marking) and what to ask the supplier.",
+          "Give a verdict: pass, flag or block, with the main reason."
+        ],
+        "tier": "Assessment is auto. Choosing a new supplier is needs_approval.",
+        "escalate": [
+          "A supplier that wants payment outside a protected platform",
+          "Any suggestion to ship straight from a marketplace to an eBay buyer",
+          "Brand or safety claims you cannot check"
+        ],
+        "never": "Contact suppliers or place orders. Recommend marketplace-to-buyer shipping on eBay. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "research",
       "model": "gemini-3.8-flash",
       "provider": "gemini",
       "mode": "manual",
@@ -548,6 +614,20 @@
       ]
     },
     {
+      "id": "research",
+      "label": "Research",
+      "color": "#2dd4bf",
+      "agents": [
+        "research",
+        "sourcing"
+      ],
+      "tools": [
+        "Research CSV import",
+        "Margin calculator",
+        "Compliance gate"
+      ]
+    },
+    {
       "id": "support",
       "label": "Tech Support",
       "color": "#fb923c",
@@ -614,7 +694,7 @@
     ]
   },
   "brain": {
-    "count": 13,
+    "count": 15,
     "notes": [
       "sops/analytics.md",
       "sops/compliance.md",
@@ -626,8 +706,10 @@
       "sops/orchestrator.md",
       "sops/orders.md",
       "sops/pricing.md",
+      "sops/research.md",
       "sops/returns.md",
       "sops/reviewer.md",
+      "sops/sourcing.md",
       "sops/techsupport.md"
     ]
   },
