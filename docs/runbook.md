@@ -1,74 +1,20 @@
 # Runbook
 ## Run an agent (free mode)
-python scripts/run_agent.py --agent listings --task "Draft a listing for SKU-001"
-Paste outbox/<file> into the AI named in it, save the reply to inbox/<same name>, commit on a branch, open a PR.
+python scripts/run_agent.py --agent sourcing --task "Scan 20 products for <keywords>"
+Open the model named in outbox/<file> on claude.ai, paste it, save the reply to inbox/<same name>, commit on a branch, open a PR.
+To use a stronger model for one run: add --tier opus (only allowed where models/routing.yml lists an escalate tier).
 
 ## Switch one agent to the API
-1. Add the key as a GitHub Secret (ANTHROPIC_API_KEY or GEMINI_API_KEY).
-2. Fill in the rates in models/costs.yml and set caps in governance/budgets.yml.
-3. In governance/status.yml set provider: api for that agent only.
-4. Keep dry_run: true. Check logs/costs.csv after each run.
+1. Add ANTHROPIC_API_KEY as a GitHub Secret (and as a Codespaces secret if you run it there).
+2. Fill in the rates in models/costs.yml. Check the AI caps in governance/budgets.yml.
+3. In governance/status.yml set provider: api for that agent only. Keep dry_run: true.
+4. Check logs/costs.csv after each run. Paid runs are refused once a cap is reached.
 
 ## Stop everything
 Actions > Kill switch > Run workflow (pause = true).
 
+## Watch for problems
+The Monitor workflow runs daily and opens an issue if a check fails. Tech Support picks the issue up.
+
 ## Monthly
 python scripts/new_accountant_pack.py and fill in the checklist.
-
-## Orchestrator (free mode)
-1. python scripts/orchestrate.py plan --goal "Draft the first three listings"
-   Paste the prompt from outbox/ into Claude and save the reply in inbox/ with the same file name.
-2. python scripts/orchestrate.py ingest inbox/<that file> --delegate
-   Paste each new outbox/ prompt into the AI it names and save each reply in inbox/ with the same file name.
-3. python scripts/orchestrate.py review   (optional second look; paste, save the reply in inbox/)
-4. python scripts/orchestrate.py digest   then read the newest file in reports/digests/
-5. python scripts/orchestrate.py decide T-YYYYMMDD-001 approved --reason "why"
-   Approved work is done by hand. Then: python scripts/orchestrate.py complete T-YYYYMMDD-001
-6. Commit on a branch and open a pull request. Merging records your sign-off.
-python scripts/orchestrate.py status shows the queue at any time. The Kill switch workflow stops everything.
-
-## AI spend cap and alerts
-- governance/budgets.yml sets total_monthly_cap (GBP) and a cap per agent. A call that could take spend past a cap is never sent.
-- At alert_at_percent (80) the dashboard shows a warning and the Budget alert workflow opens a GitHub issue. At the cap it opens a STOPPED issue.
-- The cap resets on the first of each month. To continue sooner, raise total_monthly_cap by pull request.
-- View the dashboard: python3 scripts/build_dashboard.py, then python3 -m http.server 8000 --directory dashboard.
-- The caps use estimated prices in models/costs.yml. Also set a monthly spend limit in the Anthropic Console as the independent backstop.
-
-## Tech Support (monitor, diagnose, fix, verify)
-1. python3 scripts/techsupport.py detect   runs the health checks and raises an incident for each failing one.
-2. python3 scripts/techsupport.py run INC-...   Claude diagnoses, the fix is tested in a scratch copy, applied on a branch fix/inc-..., and checked again in your working tree.
-   Free route: add --manual, paste the prepared prompt into Claude, save the reply in inbox/, then ingest, test and implement (the command prints them).
-3. You are told FIX READY. Push the branch, open and merge the pull request, then: git checkout main && git pull && python3 scripts/techsupport.py resolve INC-...
-Tech Support only changes scripts/, tests/, docs/, dashboard/ and agent briefs. Fixes to governance, models, workflows, permissions and the safety scripts are
-proposals; they are applied only if you run implement with --include-owner-files. It never pushes or merges. The dashboard page Tech Support shows every incident.
-The Monitor workflow runs the same checks daily and opens a GitHub issue if one fails.
-
-## SOPs and the brain
-Every agent has a SOP in memory/brain/sops/<agent>.md. scripts/run_agent.py adds that SOP, plus up to two related notes found by keyword search in memory/brain/, to every prompt.
-Search by hand: python3 scripts/brain_search.py "your question" [--agent listings]. Add or change a SOP by pull request; the tests check every agent has one with the standard headings.
-The SOP never overrides company rules, governance/ or the approval tiers. Add supplier notes, decisions and lessons as markdown under memory/brain/ (no customer personal data).
-
-## Product research and approvals
-0. Want to see it first? python3 scripts/demo_research.py fills the dashboard with clearly labelled DEMO products (free, no AI calls). python3 scripts/demo_research.py --clean removes them.
-1. python3 scripts/research.py template   writes research/templates/products.csv. Fill one row per product from your own exports (Seller Hub or Terapeak) and supplier quotes. API providers come later.
-2. python3 scripts/research.py import FILE.csv   rules reject cars and car parts, banned items, slow delivery (over 5 days), banned fulfilment models and margins under 30 percent, and keep the reason.
-3. python3 scripts/research.py prepare P-... --manual   prepares prompts for listings, pricing, compliance and finance. Paste each into its AI, save the reply in inbox/, then attach it:
-   python3 scripts/research.py attach P-... AGENT inbox/FILE
-4. python3 scripts/dashboard_server.py   then open Approvals. Review, tick your own checks, acknowledge any flags, then Approve or Deny. Approve makes a launch pack and a sample-order checklist; it never buys or lists.
-5. python3 scripts/research.py images P-...   saves image links as files for analysis only. Their rights stay unverified.
-Compliance: governance/policies/ebay-uk-compliance.yml and social-selling-compliance.yml are checked by scripts/policy_gate.py. A block cannot be approved; a flag needs your acknowledgement.
-Confirm the fee figures in catalogue/fees.yml (they are placeholders) and re-read the compliance files every 90 days.
-
-## Operations: parcels, supplier prices, money, customers
-Data goes in through short commands (or CSV exports) and is kept in your private Supabase database, or in operations/data/ if no keys are set. No customer names, addresses or emails: order IDs only.
-python3 scripts/watch.py order add --id O-1001 --date 2026-11-02 --channel ebay-uk --product P-1 --revenue 14.99 --cost 1.60 --shipping 0.80 --fees 2.70 --status new
-python3 scripts/watch.py ship add --order O-1001 --carrier "Royal Mail" --tracking AB123456789GB --shipped 2026-11-03 --promised-days 5 --supplier "Acme"
-python3 scripts/watch.py ship update S-... --status delivered|in_transit|exception --event "text"
-python3 scripts/watch.py listing add --product P-1 --title "Pet glove" --channel ebay-uk --price 14.99 --cost 1.60 --shipping 0.80   (what you sell and what you assumed it costs)
-python3 scripts/watch.py price import FILE.csv   new supplier prices, then: python3 scripts/watch.py scan
-python3 scripts/watch.py scan   checks every parcel against its promised delivery time and every supplier price against your margin; the Daily watch workflow does this every morning and opens an issue that mentions you
-python3 scripts/watch.py pnl    daily and weekly profit and loss   |   metrics import FILE | shop import FILE | spend add --date D --platform P --amount N
-python3 scripts/watch.py alerts [ack|close ID]
-Customer messages: python3 scripts/inbox.py add|import|list|prompt|approve. Personal data is removed first. Nothing is sent automatically (see governance/inbox.yml). Fill in catalogue/support/facts.yml so the reply templates are complete.
-See it all on the Operations page: python3 scripts/dashboard_server.py
-Daily watch on GitHub needs the repository secrets SUPABASE_URL and SUPABASE_SECRET_KEY, and the supabase/migrations/0002_ops.sql migration run in Supabase.

@@ -1,33 +1,31 @@
-# preferred = which AI handles the agent. In manual mode this tells you where to paste the prompt.
+# tier = the Claude model the agent normally uses. escalate = a stronger tier it may be switched to (run_agent.py --tier).
 agents:
-  orchestrator: {preferred: claude}
-  listings:     {preferred: claude}
-  orders:       {preferred: claude}
-  messages:     {preferred: gemini}
-  finance:      {preferred: claude}
-  compliance:   {preferred: claude}
-  reviewer:     {preferred: gemini}
-  monitor:      {preferred: claude}
-  techsupport:  {preferred: claude, max_tokens: 3000}
-  research:     {preferred: gemini}
-  sourcing:     {preferred: gemini}
-  facebook:     {preferred: claude}
-  instagram:    {preferred: claude}
-  tiktok:       {preferred: claude}
-  pinterest:    {preferred: claude}
-  marketing:    {preferred: gemini}
-  pricing:      {preferred: gemini}
-  inventory:    {preferred: gemini}
-  returns:      {preferred: claude}
-  analytics:    {preferred: gemini}
+  chief-of-staff:   {tier: sonnet}
+  sourcing:         {tier: haiku}
+  merchandiser:     {tier: haiku}
+  finance-insights: {tier: haiku}
+  compliance:       {tier: sonnet}
+  reviewer:         {tier: sonnet, escalate: opus}
+  fulfilment:       {tier: haiku}
+  customer-care:    {tier: haiku, escalate: sonnet}
+  marketing:        {tier: haiku}
+  tech-support:     {tier: opus}
 models:
-  claude:
+  haiku:
     provider: anthropic
-    model: claude-sonnet-5-5       # check docs.claude.com for current model names
+    model: claude-haiku-5-5        # check docs.claude.com for current model names
+    label: Claude Haiku 5.5
     max_tokens: 1500
     paste_into: https://claude.ai
-  gemini:
-    provider: gemini
-    model: gemini-3.8-flash        # check Google AI Studio for current model names
+  sonnet:
+    provider: anthropic
+    model: claude-sonnet-5-5
+    label: Claude Sonnet 5.5
     max_tokens: 1500
-    paste_into: https://aistudio.google.com
+    paste_into: https://claude.ai
+  opus:
+    provider: anthropic
+    model: claude-opus-5-5
+    label: Claude Opus 5.5
+    max_tokens: 1500
+    paste_into: https://claude.ai

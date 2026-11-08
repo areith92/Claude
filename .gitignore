@@ -10,3 +10,4 @@ operations/data/
 *.pyc
 .DS_Store
 .venv/
+.migration-backup/

@@ -1,29 +1,19 @@
 currency: GBP
-ai_costs:                  # 0 means no paid API use is allowed for that agent
-  total_monthly_cap: 5     # hard stop: a call that could take spend past this is never sent
-  alert_at_percent: 80     # warning on the dashboard and a GitHub issue at this level
+ai_costs:                  # per-agent caps must add up to no more than the total
+  total_monthly_cap: 5
   per_agent_monthly_cap:
-    orchestrator: 2
-    listings: 1.5
-    orders: 0
-    messages: 0
-    finance: 0.5
-    compliance: 1
-    reviewer: 0
-    monitor: 0
-    techsupport: 1
-    pricing: 0
-    research: 0
-    sourcing: 0
-    facebook: 0
-    instagram: 0
-    tiktok: 0
-    pinterest: 0
-    marketing: 0
-    inventory: 0
-    returns: 0
-    analytics: 0
+    chief-of-staff: 0.8
+    sourcing: 1.0
+    merchandiser: 0.6
+    fulfilment: 0.4
+    customer-care: 0.5
+    marketing: 0.5
+    finance-insights: 0.4
+    compliance: 0.3
+    reviewer: 0.3
+    tech-support: 0.2
 spend:                     # real-money limits that need your approval to use
   promoted_listings_monthly_cap: 0
   stock_purchases_monthly_cap: 0
+  social_ads_monthly_cap: 100
   other_monthly_cap: 0

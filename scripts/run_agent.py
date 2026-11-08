@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Run one agent. Free mode (manual) prepares a prompt for you to paste into Claude or Gemini.
-API mode calls the provider, but only if budgets, rates and keys are set. Output is always a proposal.
-Usage: python scripts/run_agent.py --agent listings --task "Draft a listing for SKU-001"
+"""Run one agent with Claude.
+Free mode (manual): writes a ready-to-paste prompt to outbox/ for claude.ai.
+API mode: calls the Claude API, but only if budgets, rates and the key are set. Output is always a proposal.
+Usage: python scripts/run_agent.py --agent sourcing --task "Scan 20 products for ..."
 """
 import argparse
 import datetime
@@ -12,8 +13,6 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from brain_search import brain_context  # noqa: E402
-from budget_guard import spend_state, would_exceed, worst_case_cost, write_stop_marker  # noqa: E402
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 from pii_guard import find_pii  # noqa: E402
 
@@ -23,41 +22,29 @@ def read(rel):
     return p.read_text() if p.exists() else ""
 
 
-def post_json(url, headers, body):
+def call_claude(model_cfg, key, prompt):
+    body = {"model": model_cfg["model"], "max_tokens": model_cfg.get("max_tokens", 1500),
+            "messages": [{"role": "user", "content": prompt}]}
     req = urllib.request.Request(
-        url, data=json.dumps(body).encode(),
-        headers={**headers, "content-type": "application/json"}, method="POST")
+        "https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(),
+        headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+        method="POST")
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
-            return json.load(resp)
+            d = json.load(resp)
     except urllib.error.HTTPError as exc:
         sys.exit(f"API error {exc.code}: {exc.read().decode()[:500]}")
-
-
-def call_api(model_cfg, key, prompt):
-    if model_cfg["provider"] == "anthropic":
-        d = post_json("https://api.anthropic.com/v1/messages",
-                      {"x-api-key": key, "anthropic-version": "2023-06-01"},
-                      {"model": model_cfg["model"], "max_tokens": model_cfg.get("max_tokens", 1500),
-                       "messages": [{"role": "user", "content": prompt}]})
-        text = "".join(b.get("text", "") for b in d["content"])
-        return text, d["usage"]["input_tokens"], d["usage"]["output_tokens"]
-    d = post_json(f"https://generativelanguage.googleapis.com/v1beta/models/{model_cfg['model']}:generateContent",
-                  {"x-goog-api-key": key},
-                  {"contents": [{"parts": [{"text": prompt}]}],
-                   "generationConfig": {"maxOutputTokens": model_cfg.get("max_tokens", 1500)}})
-    text = "".join(p.get("text", "") for p in d["candidates"][0]["content"]["parts"])
-    u = d.get("usageMetadata", {})
-    return text, u.get("promptTokenCount", 0), u.get("candidatesTokenCount", 0)
+    text = "".join(b.get("text", "") for b in d["content"] if b.get("type") == "text")
+    return text, d["usage"]["input_tokens"], d["usage"]["output_tokens"]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", required=True)
     ap.add_argument("--task", required=True)
+    ap.add_argument("--tier", help="haiku, sonnet or opus (only the agent's own tier or its escalation tier)")
     ap.add_argument("--input-file")
     ap.add_argument("--skip-pii-check", action="store_true", help="manual mode only")
-    ap.add_argument("--manual", action="store_true", help="free route: prepare a prompt even if the agent is set to the API")
     a = ap.parse_args()
 
     status = load_yaml("governance/status.yml")
@@ -72,26 +59,35 @@ def main():
         print(f"Agent {a.agent} is disabled in governance/status.yml")
         return 0
 
+    routing = load_yaml("models/routing.yml")
+    route = (routing.get("agents") or {}).get(a.agent)
+    if not route:
+        print(f"models/routing.yml has no entry for {a.agent}")
+        return 2
+    allowed = [t for t in (route.get("tier"), route.get("escalate")) if t]
+    tier = a.tier or route["tier"]
+    if tier not in allowed:
+        print(f"Refused: {a.agent} may only use {', '.join(allowed)}")
+        return 7
+    model_cfg = routing["models"][tier]
+
     extra = ""
     if a.input_file:
-        extra = (ROOT / a.input_file).read_text() if (ROOT / a.input_file).exists() else open(a.input_file).read()
-    mode = "manual" if a.manual else cfg.get("provider", status.get("provider", "manual"))
+        path = ROOT / a.input_file
+        extra = path.read_text() if path.exists() else open(a.input_file).read()
+    mode = cfg.get("provider", status.get("provider", "manual"))
     pii = find_pii(a.task + "\n" + extra)
     if pii and not (a.skip_pii_check and mode == "manual"):
         print("Refused: the task looks like it contains personal data (" + ", ".join(pii) + "). Use order IDs instead.")
         return 3
 
     dry = cfg.get("dry_run", status.get("default_dry_run", True))
+    sop = read(f"memory/brain/sops/{a.agent}.md")
     prompt = "\n\n".join(x for x in [
         read("agents/_shared/company-rules.md"), read(f"agents/{a.agent}/prompt.md"),
-        brain_context(a.agent, a.task + "\n" + extra),
-        read("agents/_shared/output-schema.md"), "## Task\n" + a.task,
-        ("## Extra input\n" + extra) if extra else ""] if x.strip())
+        ("## Your SOP\n" + sop) if sop else "", read("agents/_shared/output-schema.md"),
+        "## Task\n" + a.task, ("## Extra input\n" + extra) if extra else ""] if x.strip())
 
-    routing = load_yaml("models/routing.yml")
-    pref = routing["agents"].get(a.agent, {}).get("preferred", "claude")
-    model_cfg = dict(routing["models"][pref])
-    model_cfg["max_tokens"] = routing["agents"].get(a.agent, {}).get("max_tokens", model_cfg.get("max_tokens", 1500))
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
     name = f"{stamp}-{a.agent}.md"
     banner = f"DRY RUN: proposal only. Live actions are not implemented. Dry-run flag: {dry}\n"
@@ -100,45 +96,33 @@ def main():
         out = ROOT / "outbox" / name
         out.write_text(
             f"# Prepared prompt for {a.agent}\n{banner}\n"
-            f"Paste everything below the line into {pref.title()} ({model_cfg['paste_into']}).\n"
+            f"Open {model_cfg['paste_into']}, choose {model_cfg['label']}, and paste everything below the line.\n"
             f"Save the reply as inbox/{name}\n\n---\n\n{prompt}\n")
-        print(f"Prompt written to {out.relative_to(ROOT)}")
+        print(f"Prompt written to {out.relative_to(ROOT)} (use {model_cfg['label']})")
         return 0
 
-    costs = load_yaml("models/costs.yml")[pref]
-    free = bool(costs.get("free_tier"))
+    costs = load_yaml("models/costs.yml").get(tier, {})
     rin, rout = costs.get("input_per_mtok_gbp", 0), costs.get("output_per_mtok_gbp", 0)
-    if not free and not (rin or rout):
-        print(f"Refused: fill in the rates for {pref} in models/costs.yml first.")
+    if not (rin or rout):
+        print(f"Refused: fill in the {tier} rates in models/costs.yml first.")
         return 4
     caps = load_yaml("governance/budgets.yml")["ai_costs"]
     total, per_agent = month_totals()
-    worst = worst_case_cost(len(prompt), model_cfg.get("max_tokens", 1500), rin, rout)
-    scope = None if free else would_exceed(total, per_agent.get(a.agent, 0), worst,
-                                           caps["total_monthly_cap"], caps["per_agent_monthly_cap"].get(a.agent, 0))
-    if scope:
-        cap = caps["total_monthly_cap"] if scope == "total" else caps["per_agent_monthly_cap"].get(a.agent, 0)
-        if cap > 0:
-            write_stop_marker(ROOT, a.agent, scope, total if scope == "total" else per_agent.get(a.agent, 0), cap)
-        print(f"STOPPED: this call could take {scope} AI spend past its cap in governance/budgets.yml "
-              f"(spent {total:.2f} GBP this month). Nothing was sent. Check the dashboard.")
+    if total >= caps["total_monthly_cap"] or per_agent.get(a.agent, 0) >= caps["per_agent_monthly_cap"].get(a.agent, 0):
+        print("Refused: AI budget cap reached (or still 0) in governance/budgets.yml.")
         return 5
-    key_name = "ANTHROPIC_API_KEY" if model_cfg["provider"] == "anthropic" else "GEMINI_API_KEY"
-    key = os.environ.get(key_name)
+    key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
-        print(f"Refused: {key_name} is not set.")
+        print("Refused: ANTHROPIC_API_KEY is not set.")
         return 6
 
-    text, tin, tout = call_api(model_cfg, key, prompt)
-    cost = 0.0 if free else tin / 1e6 * rin + tout / 1e6 * rout
+    text, tin, tout = call_claude(model_cfg, key, prompt)
+    cost = tin / 1e6 * rin + tout / 1e6 * rout
     with (ROOT / "logs" / "costs.csv").open("a") as f:
-        f.write(f"{datetime.date.today()},{a.agent},{model_cfg['provider']},{model_cfg['model']},{tin},{tout},{cost:.4f},\n")
+        f.write(f"{datetime.date.today()},{a.agent},anthropic,{model_cfg['model']},{tin},{tout},{cost:.4f},\n")
     out = ROOT / "logs" / "actions" / name
     out.write_text(f"# Proposal from {a.agent} ({model_cfg['model']})\n{banner}\n{text}\n")
     print(f"Proposal written to {out.relative_to(ROOT)} (cost {cost:.4f} GBP)")
-    state = spend_state(total + cost, caps["total_monthly_cap"], caps.get("alert_at_percent", 80))
-    if state in ("warning", "stopped"):
-        print(f"BUDGET {state.upper()}: {total + cost:.2f} GBP of {caps['total_monthly_cap']} GBP used this month.")
     return 0
 
 

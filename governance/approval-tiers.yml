@@ -2,10 +2,10 @@
 tiers:
   auto:
     approval: none
-    examples: [draft listing text, triage a message, reconcile fees, internal reports]
+    examples: [orders to approved suppliers inside the stock budget, draft listing text, triage a message, reconcile fees, internal reports]
   needs_approval:
     approval: owner
-    examples: [publish or revise a listing, price change over threshold, new supplier, refund over threshold, promoted listings spend, reorder stock]
+    examples: [publish or revise a listing, price change over threshold, new supplier, refund over threshold, promoted listings spend, social ad spend, publishing social posts]
   needs_owner_and_accountant:
     approval: owner and accountant
     examples: [VAT or tax treatment, new sales channel, change to bookkeeping categories]

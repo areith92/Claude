@@ -1,6 +1,6 @@
 # Architecture
-Human owner (and accountant) -> GitHub approval gate -> Claude orchestrator -> department agents -> shared layer
-(GBrain memory, channel adapters). Agents only write proposals; the owner merges. Channels plug in via channels/_shared.
-
-Orchestrator flow: plan -> queue -> delegate (via scripts/run_agent.py) -> review -> digest -> owner decision. State lives in
-operations/tasks/queue.yml, digests in reports/digests/, decisions in logs/decisions/.
+Human owner (and accountant) -> GitHub approval gate -> Chief of Staff (Claude Sonnet) -> two groups of agents:
+- Product research pipeline: Sourcing -> Merchandiser -> Finance and Insights -> Compliance -> Reviewer -> owner Approve or Deny.
+- Operations: Fulfilment, Customer Care, Marketing, Tech Support.
+Shared layer: GBrain memory (SOPs in memory/brain/sops/) and channel adapters (eBay now, Shopify and social later).
+Agents only write proposals; the owner approves. All agents are Claude models (Haiku, Sonnet or Opus by task).

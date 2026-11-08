@@ -1,5 +1,5 @@
 currency: GBP
-min_margin_pct: 20
+min_margin_pct: 30
 never_below_cost: true
 round_to: 0.99
 max_auto_change_pct: 5

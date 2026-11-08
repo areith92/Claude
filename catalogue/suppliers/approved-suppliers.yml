@@ -1,0 +1,5 @@
+# Orders to suppliers listed here need no extra approval (they still count against stock_purchases_monthly_cap).
+# Add a supplier only after you have checked it yourself.
+approved: []
+# Example:
+# - {name: Example Supplier Ltd, platform: wholesaler, max_delivery_days: 5, notes: ""}

@@ -1,3 +1,0 @@
-# Tools this agent may use. Live API tools are added later, one at a time, by pull request.
-tools: [read_repo_files, write_proposal]
-future_tools: []

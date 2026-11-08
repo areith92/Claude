@@ -14,12 +14,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - run: pip install pyyaml
       - name: Run agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scripts/run_agent.py --agent "${{ inputs.agent }}" --task "${{ inputs.task }}"
       - name: Open a pull request with the output
         env:

@@ -1,0 +1,6 @@
+channel: social
+enabled: false                     # switch on when the social accounts are linked and the playbooks are written
+currency: GBP
+platforms: []                      # add the platforms you use, one playbook each in channels/social/playbooks/
+api:
+  mode: manual

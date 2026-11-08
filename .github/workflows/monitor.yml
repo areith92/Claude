@@ -1,30 +1,28 @@
 name: Monitor
-# Runs the health checks daily. If one fails, it opens a GitHub issue (once per day) so you hear about it.
-# The fix itself happens on your side: python3 scripts/techsupport.py detect, then run <incident id>.
 on:
   schedule:
-    - cron: "30 6 * * *"
+    - cron: "0 7 * * *"
   workflow_dispatch:
 permissions:
   contents: read
   issues: write
 jobs:
-  monitor:
+  watch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: pip install pyyaml
-      - name: Run the health checks
-        run: python scripts/monitor_checks.py --alert-file /tmp/monitor.md || true
-      - name: Open an issue if something is failing
+      - id: run
+        run: |
+          set +e
+          python scripts/monitor.py > /tmp/monitor.md
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/monitor.md
+      - name: Open an issue if there are problems
+        if: steps.run.outputs.code != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          [ -s /tmp/monitor.md ] || exit 0
-          title=$(head -1 /tmp/monitor.md | sed 's/^# //')
-          gh label create monitor-alert --color FBCA04 --force >/dev/null 2>&1 || true
-          if gh issue list --label monitor-alert --state all --limit 100 --json title --jq '.[].title' | grep -Fxq "$title"; then
-            echo "Already raised: $title"
-          else
-            gh issue create --title "$title" --label monitor-alert --body-file /tmp/monitor.md
-          fi
+          gh label create monitor --force >/dev/null 2>&1 || true
+          open=$(gh issue list --label monitor --state open --json number -q length)
+          if [ "$open" = "0" ]; then gh issue create --title "Monitor: problems found" --label monitor --body-file /tmp/monitor.md; fi

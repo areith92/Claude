@@ -1,0 +1,21 @@
+name: product-research
+cadence: manual at first (weekly once trusted)
+stages:
+  - agent: sourcing
+    task: Scan about 20 eBay UK products on keywords you choose (never cars or car parts). For each, find the wholesale or manufacturer item cost, shipping cost and delivery time from suppliers you have an agreement with, or from stock you hold. Never a retailer or marketplace shipping straight to the buyer (eBay forbids it).
+  - agent: merchandiser
+    task: Propose an eBay UK price and draft a listing for each product that passes the delivery rule.
+  - agent: finance-insights
+    task: Work out profit after eBay fees, postage and item cost. Reject anything under the minimum margin.
+  - agent: compliance
+    task: Check each remaining product against eBay rules, UK consumer-law notes and company policy.
+  - agent: reviewer
+    task: Give an independent second opinion on what is left.
+  - approval: owner
+    via: Approve or Deny on the dashboard (a pull request until the dashboard exists)
+rules:
+  max_products_per_run: 20
+  excluded_categories: [cars, car parts]
+  min_margin_pct: 30
+  max_delivery_days: 5
+  approved_suppliers_skip_approval: true
