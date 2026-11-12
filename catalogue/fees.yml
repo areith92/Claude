@@ -1,11 +1,33 @@
-# PLACEHOLDER VALUES. Replace them with the figures on your own fee statements, then set confirmed: true.
-# They are deliberately on the high side, so margins are not flattered. Unconfirmed fees always raise a flag.
+# Fee structures checked on 12 November 2026 from public fee pages and calculators. They stay unconfirmed until you read
+# the exact figures on your own eBay and Etsy fee pages and set confirmed: true. Unconfirmed fees always raise a flag.
+# The keys final_value_fee_pct, fixed_fee_gbp and promoted_listing_pct are the ones scripts/margin.py reads; the other
+# keys document the breakdown so the maths can be checked by hand.
 channels:
   ebay-uk:
     confirmed: false
-    final_value_fee_pct: 15.0        # of the total the buyer pays
-    fixed_fee_gbp: 0.40              # per order
-    promoted_listing_pct: 3.0        # assumed advertising rate; set 0 if you do not promote
+    final_value_fee_pct: 15.9        # 12.9 percent (most categories) plus 0.35 percent regulatory fee, both plus 20 percent VAT; confirm the Baby category rate
+    fixed_fee_gbp: 0.48              # 0.40 per order over 10 GBP, plus VAT (0.36 for orders of 10 GBP or less)
+    promoted_listing_pct: 0          # set the ad rate here if you use Promoted Listings
+    breakdown:
+      final_value_pct: 12.9
+      regulatory_operating_pct: 0.35
+      per_order_gbp_over_10: 0.40
+      per_order_gbp_up_to_10: 0.30
+      vat_on_fees_pct: 20
+  etsy-uk:
+    confirmed: false
+    final_value_fee_pct: 13.0        # 6.5 transaction plus 4.0 payment processing plus about 0.35 regulatory, all plus 20 percent VAT, on item price plus postage
+    fixed_fee_gbp: 0.42              # 0.20 payment fee plus about 0.15 listing fee, plus VAT
+    promoted_listing_pct: 0          # Offsite Ads take 15 percent of an attributed order (12 above 10,000 USD a year); opt out while under the threshold
+    breakdown:
+      transaction_pct: 6.5
+      payment_processing_pct: 4.0
+      payment_fixed_gbp: 0.20
+      listing_fee_gbp: 0.15
+      regulatory_operating_pct: 0.35   # calculators quote 0.25 to 0.48; read the figure on your Etsy fee page
+      offsite_ads_pct: 15
+      offsite_ads_opted_out: true
+      vat_on_fees_pct: 20
   social:
     confirmed: false
     platform_commission_pct: 8.0     # if you sell through a platform shop; 0 for your own checkout link
@@ -13,7 +35,13 @@ channels:
     payment_fixed_gbp: 0.25
 common:
   returns_allowance_pct: 5.0         # share of sales assumed lost to returns and refunds
-  packaging_gbp: 0.50                # only for stock you hold and ship yourself
+  packaging_gbp: 0.90                # mailing box or bag plus tissue for stock you hold; a magnetic gift box is costed in the product itself
   vat_registered: false
   vat_rate_pct: 20
-  import_duty_pct: 0                 # share of item cost; ask your accountant or the supplier
+  import_duty_pct: 0                 # Route A: no imports
+postage_gbp:                         # Royal Mail online prices from 5 October 2026; Evri from a price comparison the same month
+  royal_mail_tracked48_large_letter_1kg: 2.90
+  royal_mail_tracked48_small_parcel_2kg: 3.75
+  royal_mail_tracked48_small_parcel_counter: 4.70
+  evri_parcelshop_small_parcel: 2.62
+  evri_door_small_parcel: 3.04

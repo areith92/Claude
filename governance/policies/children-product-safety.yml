@@ -1,0 +1,49 @@
+# UK safety rules for children's and nursery products, as checks the code can run on every channel. Written 2026-11-12 from
+# public guidance (Toys (Safety) Regulations 2011, Nightwear (Safety) Regulations 1985, General Product Safety Regulations 2005,
+# the UK Cosmetics Regulation, BS EN 14682 on cords and drawstrings). The owner confirms each rule and updates `reviewed`.
+# These are our reading of the rules, not legal advice. Business Companion (free Trading Standards guidance) is the place to check.
+scope: all channels
+reviewed: 2026-11-12
+review_every_days: 90
+confirmed_by_owner: false
+rules:
+  - id: KIDS-SAFE-1
+    title: Supplier safety pack received and read
+    severity: flag
+    check: {type: field_true, field: safety_docs_ok}
+    why: Toys need a declaration of conformity (UKCA or CE) and EN 71 test evidence; textiles need fibre content labels; nightwear needs its flammability label; cosmetics need the UK Responsible Person's name and address on the label. Tick safety_docs_ok only after you have the documents in the supplier pack.
+  - id: KIDS-SAFE-2
+    title: Labels carry the manufacturer (and UK importer) name and address, batch number and warnings
+    severity: flag
+    check: {type: field_true, field: labels_checked}
+    why: Toys sold in Great Britain must be traceable to the manufacturer, or to the UK importer if the manufacturer is abroad, with a batch or type number, the UKCA or CE mark and any warnings such as the age warning. Check the real product, not the website.
+  - id: KIDS-SAFE-3
+    title: Nightwear listing shows the flammability wording
+    severity: flag
+    check: {type: field_true_if, field: nightwear_label_ok, when_field: nightwear, when_value: true}
+    why: Babies' garments and children's nightwear must carry a permanent label saying whether they meet BS 5722, with KEEP AWAY FROM FIRE in red if they do not, and online adverts must show that wording next to the item. Mark nightwear = true for sleepsuits, gowns and similar.
+  - id: KIDS-SAFE-4
+    title: No hazardous product types
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: banned_keywords}
+    why: Sleep positioners, cot bumpers, amber or teething necklaces, bath seats, weighted sleep products, button batteries and magnet toys are on our own banned list because of choking, strangulation and suffocation risks. Second-hand items are banned because their paperwork cannot be verified.
+  - id: KIDS-SAFE-5
+    title: Cosmetic or food item sold unaltered under its own brand label
+    severity: flag
+    check: {type: field_true_if, field: brand_label_unaltered, when_field: contains_cosmetic_or_food, when_value: true}
+    why: As a distributor you may sell a UK brand's cosmetic or food item as it is, with its own Responsible Person or food business label. Decanting, relabelling, rebranding or making claims of your own would make you the Responsible Person with full duties.
+  - id: KIDS-SAFE-6
+    title: No health, medical or safety claims of our own
+    severity: flag
+    check: {type: field_true, field: no_claims_ok}
+    why: Words such as helps, soothes, prevents, safe for pregnancy, colic, reflux and eczema are claims. Etsy prohibits medical claims regardless of disclaimers, and the CAP Code applies to adverts. Describe materials, sizes and features; quote only what the brand's own label says.
+  - id: KIDS-SAFE-7
+    title: Stage 2 health products stay off until the owner switches them on
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: stage2_health_keywords}
+    why: Supplements, pregnancy tests, breast pumps, TENS and similar bring food law, medical device rules and platform bans. Decision 0010 keeps them out of Stage 1. When Stage 2 opens, the owner removes the keyword from stage2_health_keywords for one product at a time.
+  - id: KIDS-SAFE-8
+    title: Age grading and small-parts warning recorded
+    severity: flag
+    check: {type: field_true_if, field: age_grading_ok, when_field: toy, when_value: true}
+    why: A toy for under 36 months must not have small parts; a toy unsuitable for under 36 months must carry that warning. Record the supplier's age grading and copy it into the listing. Mark toy = true for rattles, stackers, gyms and similar.

@@ -1,0 +1,15 @@
+channel: etsy-uk
+enabled: true
+marketplace: Etsy United Kingdom
+currency: GBP
+ships_to: [GB]
+lanes: [etsy_gift_box, etsy_designed, etsy_personalised]      # ebay_resale items are never listed here
+api:
+  mode: manual                     # manual | api (api needs an Etsy developer account with a Seller App, and OAuth tokens in GitHub Secrets)
+  app_type: seller_app             # a tool for one seller's own shop
+  default_limits: {requests_per_day: 10000, requests_per_second: 10}
+  secrets: [ETSY_API_KEY, ETSY_SHARED_SECRET, ETSY_REFRESH_TOKEN]
+shop_settings_to_complete:
+  - production partners added in shop settings (name and location) before the first designed or personalised listing
+  - Offsite Ads opted out while under the 10,000 USD threshold, or the 15 percent added to catalogue/fees.yml
+  - processing times set per listing, in-stock boxes 1 to 2 days, made-to-order items up to 7 days

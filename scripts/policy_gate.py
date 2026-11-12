@@ -10,7 +10,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_budget import ROOT, load_yaml  # noqa: E402
 
-RULE_FILES = {"ebay-uk": "governance/policies/ebay-uk-compliance.yml", "social": "governance/policies/social-selling-compliance.yml"}
+RULE_FILES = {"ebay-uk": "governance/policies/ebay-uk-compliance.yml", "etsy-uk": "governance/policies/etsy-uk-compliance.yml",
+              "social": "governance/policies/social-selling-compliance.yml"}
+COMMON_RULE_FILES = ["governance/policies/children-product-safety.yml"]  # applied on every channel
 
 
 def get(d, path, default=None):
@@ -29,7 +31,15 @@ def keyword_hits(text, words):
 
 def load_rules(channel):
     rel = RULE_FILES.get(channel)
-    return (load_yaml(rel), rel) if rel else ({}, None)
+    if not rel:
+        return {}, None
+    rules = dict(load_yaml(rel) or {})
+    merged = list(rules.get("rules") or [])
+    for common in COMMON_RULE_FILES:
+        if (ROOT / common).exists():
+            merged += (load_yaml(common) or {}).get("rules") or []
+    rules["rules"] = merged
+    return rules, rel
 
 
 def check(rule, d, cfg, today=None):

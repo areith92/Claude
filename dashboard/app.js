@@ -194,13 +194,15 @@
     const on = D.agents.filter(function (a) { return a.enabled; }).length;
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
     const q = Object.entries(D.queue).map(function (kv) { return kv[0] + " " + kv[1]; }).join(" · ");
-    return [head("overview", "COMMERCE OS"), banner(), supportBanner(),
+    return [head("overview · new baby gifting · eBay UK + Etsy UK", "COMMERCE OS"), banner(), supportBanner(),
       h("div", { class: "grid stats" },
         stat("AI SPEND · MTD", gbp(s.spent_gbp), "of £" + s.cap_gbp + " cap", s.state === "stopped" ? "bad" : s.state === "warning" ? "warn" : ""),
         stat("NEEDS YOUR DECISION", String(D.approvals.length), D.approvals.length ? "see Tasks" : "all clear", D.approvals.length ? "warn" : ""),
         stat("TASKS", String(D.tasks.length), q || "none yet"),
         stat("AGENTS", on + "/" + D.agents.length, live + " on the API"),
         stat("MODE", D.mode.provider || "manual", D.mode.dry_run_default ? "draft only · no live actions" : "live actions on"),
+        stat("STOCK BUDGET", gbp(((D.niche || {}).limits || {}).stock_cap_gbp), "first order cap · " + gbp(((D.niche || {}).limits || {}).first_order_cap_gbp)),
+        stat("POLICIES", String(((D.niche || {}).policies || []).length), stalePolicies().length ? stalePolicies().length + " past review" : (unconfirmedPolicies().length ? unconfirmedPolicies().length + " to confirm" : "all reviewed"), stalePolicies().length ? "bad" : unconfirmedPolicies().length ? "warn" : ""),
         stat("TECH SUPPORT", String(openInc().length), fixReady().length ? plural(fixReady().length, "fix") + " ready" : "open incidents", fixReady().length ? "warn" : openInc().length ? "bad" : "")),
       h("div", { class: "cols" }, decisions(),
         panel("DEPARTMENTS", h("div", { class: "deptchips" }, D.departments.map(function (d) {
@@ -673,10 +675,72 @@
     return [head("deliveries, money and customers", "OPERATIONS"), box];
   }
 
+  /* ---------- niche: compliance and channels ---------- */
+  const niche = function () { return D.niche || { lanes: {}, fulfilment: {}, stage2: {}, limits: {}, keywords: {}, policies: [], fees: [], postage: {}, channels: [] }; };
+  const stalePolicies = function () { return niche().policies.filter(function (p) { return p.stale; }); };
+  const unconfirmedPolicies = function () { return niche().policies.filter(function (p) { return !p.confirmed; }); };
+  const laneText = { ebay_resale: "Wholesale item from a UK brand or wholesaler, sold as it is. eBay only.",
+    etsy_gift_box: "Curated gift box: different item types, more than one brand, every item listed.",
+    etsy_designed: "Our original design (AI-assisted designs disclosed), made by a disclosed production partner.",
+    etsy_personalised: "Buyer's own text or image, made by a disclosed production partner. First photo shows a finished example." };
+  function compliancePage() {
+    const n = niche(), st = n.stage2 || {}, lim = n.limits || {}, kw = n.keywords || {};
+    const feesOk = n.fees.filter(function (f) { return f.confirmed; }).length;
+    return [head("rules and documents", "COMPLIANCE"),
+      h("div", { class: "grid stats" },
+        stat("NICHE", "new baby gifting", n.name || ""),
+        stat("POLICY FILES", String(n.policies.length), stalePolicies().length ? stalePolicies().length + " past the 90-day review" : "all inside review", stalePolicies().length ? "bad" : ""),
+        stat("CONFIRMED BY YOU", (n.policies.length - unconfirmedPolicies().length) + "/" + n.policies.length, unconfirmedPolicies().length ? "tick confirmed_by_owner after reading each file" : "all confirmed", unconfirmedPolicies().length ? "warn" : ""),
+        stat("STAGE 2 HEALTH", st.enabled ? "ON" : "OFF", st.enabled ? "eBay only, one product at a time" : (st.keywords || 0) + " keywords blocked", st.enabled ? "warn" : "ok"),
+        stat("FEES CONFIRMED", feesOk + "/" + n.fees.length, feesOk < n.fees.length ? "margins flagged until you confirm catalogue/fees.yml" : "catalogue/fees.yml confirmed", feesOk < n.fees.length ? "warn" : ""),
+        stat("MARGIN FLOOR", (lim.min_margin_pct || 30) + "%", "after the full fee stack and the stress test")),
+      panel("POLICY FILES · governance/policies/", table(["File", "Scope", "Rules", "Blocks", "Reviewed", "Due", "Confirmed"], n.policies.map(function (p) {
+        return { data: p, cells: [p.file, p.scope, String(p.rules), String(p.blocks), p.reviewed || "none",
+          p.stale ? pill("past review", "bad") : pill("in " + p.due_in_days + " days", p.due_in_days < 14 ? "warn" : "ok"),
+          p.confirmed ? pill("yes", "ok") : pill("not yet", "warn")] };
+      }), null, "No policy files found.")),
+      panel("PRODUCT LANES · catalogue/research.yml", table(["Lane", "What it means", "Channels"], Object.keys(n.lanes).map(function (k) {
+        const chans = n.channels.filter(function (c) { return (c.lanes || []).indexOf(k) >= 0; }).map(function (c) { return c.label; }).join(", ");
+        return { data: k, cells: [k, laneText[k] || n.lanes[k], chans || "—"] };
+      }), null, "No lanes defined.")),
+      panel("LIMITS THE CODE ENFORCES", h("div", { class: "grid stats" },
+        stat("FIRST ORDER", gbp(lim.first_order_cap_gbp), "catalogue/research.yml"), stat("STOCK A MONTH", gbp(lim.stock_cap_gbp), "governance/budgets.yml"),
+        stat("ADS A MONTH", gbp(lim.ads_cap_gbp), "governance/budgets.yml"), stat("SUPPLIER DELIVERY", (lim.supplier_days || 0) + " days", "wholesaler to you"),
+        stat("PARTNER DISPATCH", (lim.partner_days || 0) + " days", "order to dispatch, personalised"), stat("KEYWORDS", (kw.seed || 0) + " seed", (kw.banned || 0) + " banned · " + (kw.restricted || 0) + " restricted"))),
+      panel("THE GATE", h("p", null, "Every product dossier runs through the compliance gate before it reaches Approvals. Blocks stop it; flags list the document, label or wording that is missing."),
+        copyBtn("python3 scripts/policy_gate.py research/dossiers/P-XXXX.json", "Copy: run the gate on a dossier"),
+        h("p", { class: "empty" }, "Checklist in words: memory/brain/sops/compliance.md · rules in governance/policies/children-product-safety.yml, ebay-uk-compliance.yml and etsy-uk-compliance.yml."))];
+  }
+  function channelsPage() {
+    const n = niche();
+    const feeOf = function (id) { return n.fees.find(function (f) { return f.channel === id; }) || { breakdown: {} }; };
+    const lines = function (id) {
+      const b = feeOf(id).breakdown || {};
+      if (id === "ebay-uk") return ["Final value fee " + b.final_value_pct + "% of item plus postage (most categories)", "Per order " + gbp(b.per_order_gbp_over_10) + " over £10, " + gbp(b.per_order_gbp_up_to_10) + " up to £10", "Regulatory operating fee " + b.regulatory_operating_pct + "%", "VAT " + b.vat_on_fees_pct + "% on all fees"];
+      if (id === "etsy-uk") return ["Transaction " + b.transaction_pct + "% of item plus postage", "Payment processing " + b.payment_processing_pct + "% + " + gbp(b.payment_fixed_gbp), "Listing " + gbp(b.listing_fee_gbp) + " per listing or renewal", "Regulatory operating fee about " + b.regulatory_operating_pct + "% (confirm on your fee page)", "Offsite Ads " + b.offsite_ads_pct + "% of an attributed order" + (b.offsite_ads_opted_out ? " · opted out" : ""), "VAT " + b.vat_on_fees_pct + "% on all fees"];
+      return [];
+    };
+    return [head("where we sell", "CHANNELS"), h("div", { class: "cards" }, n.channels.map(function (c) {
+      const f = feeOf(c.id);
+      return h("div", { class: "panel" }, h("div", { class: "ptitle" }, c.label.toUpperCase()),
+        h("div", { class: "badges" }, pill(c.enabled ? "enabled" : "off", c.enabled ? "ok" : "mut"), pill(c.mode + " mode"), pill(f.confirmed ? "fees confirmed" : "fees unconfirmed", f.confirmed ? "ok" : "warn")),
+        h("p", null, h("b", null, "Lanes: "), (c.lanes || []).join(", ") || "none"),
+        h("ul", { class: "sop" }, lines(c.id).map(function (t) { return h("li", null, t); })),
+        h("p", { class: "empty" }, "Margin maths uses " + (f.fee_pct || 0) + "% + " + gbp(f.fixed_gbp) + " all-in from catalogue/fees.yml."));
+    })),
+      panel("POSTAGE · online prices in catalogue/fees.yml", table(["Service", "Price"], Object.keys(n.postage).map(function (k) {
+        return { data: k, cells: [k.replace(/_/g, " "), gbp(n.postage[k])] };
+      }), null, "No postage figures yet.")),
+      panel("WHAT THE CODE MUST NEVER DO", h("ul", { class: "sop" },
+        h("li", null, "Set a price from eBay API data, reprice against other sites, or order automatically from third-party sites (eBay API licence)."),
+        h("li", null, "List a wholesale item as it is on Etsy, or ship anything to an Etsy buyer that is not our design, the buyer's personalisation or a curated box (Etsy Creativity Standards)."),
+        h("li", null, "Make a health, medical or safety claim of our own, on any channel.")))];
+  }
+
   /* ---------- shell ---------- */
-  const NAV = [["OPERATE", [["home", "Home"], ["approvals", "Approvals"], ["ops", "Operations"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
-    ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["connections", "Connections"], ["roadmap", "Roadmap"]]]];
-  const PAGES = { home: home, tasks: tasksPage, approvals: approvalsPage, ops: opsPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, connections: connectionsPage, roadmap: roadmapPage };
+  const NAV = [["OPERATE", [["home", "Home"], ["approvals", "Approvals"], ["compliance", "Compliance"], ["ops", "Operations"], ["tasks", "Tasks"], ["support", "Tech Support"], ["finances", "Finances"]]], ["AGENTS", [["agents", "Agents"], ["org", "Org Chart"]]],
+    ["INTELLIGENCE", [["core", "Knowledge Core"], ["health", "Health"]]], ["SYSTEM", [["channels", "Channels"], ["connections", "Connections"], ["roadmap", "Roadmap"]]]];
+  const PAGES = { home: home, tasks: tasksPage, approvals: approvalsPage, compliance: compliancePage, ops: opsPage, support: supportPage, finances: financesPage, agents: agentsPage, org: orgPage, core: corePage, health: healthPage, channels: channelsPage, connections: connectionsPage, roadmap: roadmapPage };
 
   function side(active) {
     const live = D.agents.filter(function (a) { return a.enabled && a.mode === "api"; }).length;
@@ -689,7 +753,7 @@
       });
     });
     document.getElementById("side").replaceChildren(
-      h("div", { class: "logo" }, h("i"), h("div", null, h("b", null, "COMMERCE OS"), h("span", null, "V1 · OPERATOR MODE"))), nav,
+      h("div", { class: "logo" }, h("i"), h("div", null, h("b", null, "COMMERCE OS"), h("span", null, "NEW BABY GIFTING · EBAY + ETSY"))), nav,
       h("div", { class: "sidefoot" }, h("div", null, h("span", { class: live ? "dot" : "dot off" }), live + "/" + D.agents.length + " agents on the API"),
         h("div", null, "static page · reads status.js")));
   }

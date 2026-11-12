@@ -1,12 +1,41 @@
-# Rules for the product research pipeline (scripts/research.py). Owner edits by pull request.
+# Rules for the product research pipeline (scripts/research.py and scripts/policy_gate.py). Owner edits by pull request.
+# Niche: UK new-baby and expectant-parent gifting (decision 0010). Sourcing: Route A, UK stock plus one UK production partner.
+niche: new-baby and expectant-parent gifting, UK only
 max_products_per_run: 20
-min_margin_pct: 30                  # below this a product is rejected, and the reason is kept
+min_margin_pct: 30
 stress_cost_increase_pct: 10        # flag it if the margin would fall below the minimum when cost rises by this much
-max_supplier_delivery_days: 5       # upper end of the supplier's delivery estimate
-research_freshness_days: 7          # data older than this must be re-checked before approval
-allowed_fulfilment_models:          # eBay forbids buying from another retailer or marketplace that ships direct to the buyer
-  ebay-uk: [hold_stock, wholesale_dropship]
-  social: [hold_stock, wholesale_dropship, marketplace_dropship]
+max_supplier_delivery_days: 5       # stock replenishment from a UK wholesaler or brand to you
+max_production_partner_days: 7      # order to dispatch for a personalised or original-design item; the listing must state it
+research_freshness_days: 7
+first_order_cap_gbp: 300            # the first stock order; the monthly stock cap lives in governance/budgets.yml
+stage2_health_products:
+  enabled: false                    # owner switches on later, eBay only, one product at a time through the gate
+  channels: [ebay-uk]
+product_lanes:                      # which lane a product sits in; the compliance gate checks the lane's rules
+  ebay_resale:          "wholesale item from a UK brand or wholesaler, sold as it is"
+  etsy_gift_box:        "curated gift box: different item types, more than one brand, every item listed"
+  etsy_designed:        "our original design (AI-assisted designs disclosed), made by a disclosed production partner"
+  etsy_personalised:    "buyer's own text or image, made by a disclosed production partner"
+allowed_fulfilment_models:          # hold_stock = stock in your hands; production_partner = a UK partner makes and ships your design or the buyer's personalisation
+  ebay-uk: [hold_stock, production_partner]
+  etsy-uk: [hold_stock, production_partner]
+  social:  [hold_stock, production_partner]
+seed_keywords:                      # starting points for the research agent; it adds its own within the niche
+  - new baby gift box
+  - newborn gift set
+  - baby shower gift
+  - mum to be gift box
+  - personalised baby bodysuit
+  - baby name bodysuit
+  - newborn sleepsuit set
+  - wooden baby rattle
+  - wooden stacking toy
+  - wooden baby gym
+  - muslin squares gift set
+  - baby milestone cards
+  - baby first christmas outfit
+  - baby announcement sign
+  - new dad gift
 banned_keywords:                    # rejected straight away, never researched
   - car
   - cars
@@ -36,18 +65,70 @@ banned_keywords:                    # rejected straight away, never researched
   - vape
   - tobacco
   - counterfeit
+  - replica
+  - second hand
+  - second-hand
+  - pre-loved
+  - preloved
+  - used
+  - sleep positioner
+  - cot bumper
+  - amber necklace
+  - amber bracelet
+  - teething necklace
+  - bath seat
+  - baby walker
+  - weighted sleep sack
+  - weighted swaddle
+  - button battery
+  - magnet toy
+  - magnetic toy
 restricted_keywords:                # allowed, but flagged: documents or checks are needed before listing
   - battery
   - charger
   - electrical
   - led
-  - toy
-  - baby
-  - child
   - cosmetic
   - skincare
-  - supplement
+  - balm
+  - oil
+  - candle
   - food
+  - tea
   - medical
   - heater
   - laser
+  - teether
+  - dummy
+  - pacifier
+  - soother
+  - blanket
+  - swaddle
+  - sleeping bag
+  - nightwear
+  - sleepsuit
+  - babygrow
+  - dressing gown
+  - pillow
+  - cushion
+  - mattress
+stage2_health_keywords:             # blocked while stage2_health_products.enabled is false
+  - supplement
+  - supplements
+  - vitamin
+  - vitamins
+  - folic acid
+  - pregnancy test
+  - ovulation
+  - breast pump
+  - nipple
+  - tens
+  - compression
+  - morning sickness
+  - stretch mark
+  - stretch marks
+  - perineal
+  - fertility
+  - colic
+  - reflux
+  - gripe

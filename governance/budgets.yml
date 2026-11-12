@@ -14,6 +14,6 @@ ai_costs:                  # per-agent caps must add up to no more than the tota
     tech-support: 0.2
 spend:                     # real-money limits that need your approval to use
   promoted_listings_monthly_cap: 0
-  stock_purchases_monthly_cap: 0
+  stock_purchases_monthly_cap: 300    # first order; starting stock budget is 250 to 500 GBP (decision 0010)
   social_ads_monthly_cap: 100
   other_monthly_cap: 0

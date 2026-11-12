@@ -1,0 +1,13 @@
+# How a product dossier maps onto an Etsy UK listing. Field names on the left are ours; the right side is what the listing needs.
+title: {from: title, max_chars: 140, notes: "Front-load the gift occasion and the item: New Baby Gift Box, Personalised Baby Bodysuit"}
+description: {from: description, must_include: [every_item_in_box_if_gift_box, production_partner_disclosure_if_partner, ai_assisted_design_disclosure_if_ai, nightwear_wording_if_nightwear, age_grading_if_toy, materials, sizes, care]}
+tags: {count: 13, from: tags, notes: "multi-word, buyer language: baby shower gift, new mum gift, newborn present"}
+who_made: {values: {etsy_gift_box: i_did, etsy_designed: someone_else, etsy_personalised: someone_else}, notes: "someone_else means a production partner; disclose it"}
+when_made: {values: {etsy_gift_box: made_to_order_or_in_stock, etsy_designed: made_to_order, etsy_personalised: made_to_order}}
+is_personalizable: {from: lane, true_when: etsy_personalised, instructions_field: personalisation_instructions}
+processing_time_days: {from: processing_days, max: 7}
+price_gbp: {from: price_gbp, notes: "cost-plus from scripts/margin.py; never from eBay API data"}
+postage: {from: postage_gbp, default_service: "Royal Mail Tracked 48", notes: "Etsy fees apply to postage too"}
+images: {min: 5, first_image_rule: "finished product; for personalised items a finished example, never a blank or placeholder text", rights: own_photos_only}
+materials: {from: materials}
+section: {from: lane, values: {etsy_gift_box: "Gift boxes", etsy_designed: "Our designs", etsy_personalised: "Personalised"}}

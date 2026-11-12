@@ -1,0 +1,83 @@
+# Etsy UK rules, as checks the code can run. Written 2026-11-12 from Etsy's Creativity Standards, the drop-shipping and reselling
+# help pages, the production partner rules and the prohibited items policy. The owner confirms each rule against the current
+# Etsy pages and updates `reviewed` when done. Not legal advice.
+channel: etsy-uk
+reviewed: 2026-11-12
+review_every_days: 90
+confirmed_by_owner: false
+rules:
+  - id: ETSY-LANE-1
+    title: Every product sits in one allowed Etsy lane
+    severity: block
+    check: {type: field_not_in, field: lane, values: [ebay_resale, "", null]}
+    why: Reselling commercially available items and drop shipping are not allowed on Etsy. Allowed lanes here are etsy_gift_box, etsy_designed, etsy_personalised. A product with the ebay_resale lane cannot be listed on Etsy.
+  - id: ETSY-LANE-2
+    title: No marketplace or wholesale drop shipping
+    severity: block
+    check: {type: field_not_in, field: fulfilment_model, values: [marketplace_dropship, wholesale_dropship]}
+    why: Etsy allows a production partner to make and ship your original design or the buyer's personalisation, and nothing else shipped straight from a third party.
+  - id: ETSY-BOX-1
+    title: Gift box has a clear theme, different item types and more than one brand
+    severity: flag
+    check: {type: field_true_if, field: gift_box_rules_ok, when_field: lane, when_value: etsy_gift_box}
+    why: Etsy's handpicked rules allow gift baskets only as a themed assortment of different item types that you selected and creatively packaged. A single item type, a single brand or a mystery box does not qualify.
+  - id: ETSY-BOX-2
+    title: Every item in the box is listed in the description
+    severity: flag
+    check: {type: field_true_if, field: box_contents_listed, when_field: lane, when_value: etsy_gift_box}
+    why: Sellers must list every item contained in a curated gift box in the listing description.
+  - id: ETSY-PP-1
+    title: Production partner disclosed on the listing and in shop settings
+    severity: flag
+    check: {type: field_true_if, field: partner_disclosed, when_field: fulfilment_model, when_value: production_partner}
+    why: Items made by a production partner must say so, with accurate information about where the item ships from. The partner must also be added in shop settings.
+  - id: ETSY-PP-2
+    title: Designed items are our own original design; AI-assisted designs say so
+    severity: flag
+    check: {type: field_true_if, field: original_design_ok, when_field: lane, when_value: etsy_designed}
+    why: Only your original designs (including seller-prompted AI creations, disclosed in the description) may be produced by a partner. Templates bought elsewhere and licensed characters are not allowed.
+  - id: ETSY-PERS-1
+    title: Personalised items use the buyer's own text or image and the first photo shows a finished example
+    severity: flag
+    check: {type: field_true_if, field: personalised_rules_ok, when_field: lane, when_value: etsy_personalised}
+    why: Buyer-personalised items made by a production partner are allowed under "sourced by a seller". The first listing image must show a finished, customised item, not a blank or placeholder text.
+  - id: ETSY-IMG-1
+    title: Photos are our own, or commercial images only where the lane allows
+    severity: flag
+    check: {type: images_rights}
+    why: Gift boxes and designed items need original photos of the real, final product. Supplier photos are not allowed for those lanes.
+  - id: ETSY-CLAIM-1
+    title: No medical claims and no prohibited items
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: stage2_health_keywords}
+    why: Etsy prohibits medical drugs, regulated medical devices and any item claiming to treat, prevent, mitigate, cure or diagnose a condition, regardless of disclaimers. Stage 2 products never go on Etsy.
+  - id: ETSY-ITEM-1
+    title: No banned product types
+    severity: block
+    check: {type: keywords_absent, fields: [keyword, title, category], list: banned_keywords}
+    why: Our own banned list, plus Etsy's prohibited items (including items that pose a choking, strangulation or electrocution hazard, and recalled items).
+  - id: ETSY-SAFE-1
+    title: UK product safety documents
+    severity: flag
+    check: {type: field_true, field: safety_docs_ok}
+    why: The same UK law applies on Etsy as anywhere else. See governance/policies/children-product-safety.yml.
+  - id: ETSY-DELIV-1
+    title: Dispatch time stated honestly, including production time for made-to-order items
+    severity: flag
+    check: {type: field_true, field: delivery_promise_checked}
+    why: Made-to-order and personalised items must show a processing time the partner can meet (up to 7 days in catalogue/research.yml).
+  - id: ETSY-FEE-1
+    title: Fee figures confirmed
+    severity: flag
+    check: {type: fees_confirmed}
+    why: Margins are only as good as the fee figures in catalogue/fees.yml. Opt out of Offsite Ads while under the threshold, or add the 15 percent to the maths.
+  - id: ETSY-MARGIN-1
+    title: Margin still above the minimum if costs rise
+    severity: flag
+    check: {type: stress_margin_ok}
+    why: A small cost rise would take this product under your minimum margin.
+  - id: ETSY-DATA-1
+    title: Research data is fresh
+    severity: block
+    check: {type: fresh}
+    why: Prices and stock change. Re-check the data before approving.

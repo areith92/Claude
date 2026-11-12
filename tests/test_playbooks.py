@@ -59,13 +59,13 @@ class Playbooks(unittest.TestCase):
             self.assertIn(f"- {p.stem}:", index)
 
     def test_an_agent_prompt_gets_its_playbook_and_the_procedure_that_matches_the_task(self):
-        ctx = bs.brain_context("orders", "A parcel is late and the customer is asking where it is")
+        ctx = bs.brain_context("fulfilment", "A parcel is late and the customer is asking where it is")
         self.assertIn("Your department playbook, from memory/brain/sops/departments/operations.md", ctx)
         self.assertIn("sops/procedures/late-parcel.md", ctx)
         self.assertNotIn("sops/procedures/data-breach.md", ctx)
-        if "research" in AGENTS:
-            self.assertIn("departments/research.md", bs.brain_context("research", "Pick keywords"))
-        self.assertIn("departments/company.md", bs.brain_context("orchestrator", "Plan the week"))
+        if "sourcing" in AGENTS:
+            self.assertIn("departments/research.md", bs.brain_context("sourcing", "Pick keywords"))
+        self.assertIn("departments/company.md", bs.brain_context("chief-of-staff", "Plan the week"))
         if "marketing" in AGENTS:  # present once the social agents are installed
             self.assertIn("procedures/social-post-approval.md", bs.brain_context("marketing", "Approve this post for facebook"))
 

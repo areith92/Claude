@@ -65,3 +65,18 @@ rules:
     severity: block
     check: {type: fresh}
     why: Prices and stock change. Re-check the data before approving.
+  - id: EBAY-DS-4
+    title: Production partner items need a written partner agreement
+    severity: flag
+    check: {type: field_true_if, field: partner_agreement, when_field: fulfilment_model, when_value: production_partner}
+    why: eBay allows fulfilment by a genuine supplier or manufacturer, not by a retailer or marketplace. Keep the production partner's terms and mark partner_agreement.
+  - id: EBAY-API-1
+    title: Price was set by cost-plus maths or the owner's Seller Hub research, not from eBay API data
+    severity: flag
+    check: {type: field_true, field: price_source_ok}
+    why: The eBay API licence bans using eBay content to suggest or model prices for eBay listings, bans seller arbitrage, and bans using eBay data to train AI. Mark price_source_ok when the price came from scripts/margin.py (cost plus fees and margin) or from your own Terapeak notes.
+  - id: EBAY-SAFE-2
+    title: Children's product checklist complete
+    severity: flag
+    check: {type: field_true, field: labels_checked}
+    why: See governance/policies/children-product-safety.yml. Labels, warnings and nightwear wording are checked on the real product.

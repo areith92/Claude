@@ -42,7 +42,7 @@ class Margin(unittest.TestCase):
         fees = load_yaml("catalogue/fees.yml")
         r = mg.with_stress({"channel": "ebay-uk", "sale_price_gbp": 24.99, "supplier_cost_gbp": 6.5, "supplier_shipping_gbp": 1.2, "postage_gbp": 2.85,
                             "fulfilment_model": "hold_stock"}, fees, 10)
-        self.assertEqual((r["margin_pct"], r["stress_margin_pct"], r["fees_confirmed"]), (31.2, 28.6, False))
+        self.assertEqual((r["margin_pct"], r["stress_margin_pct"], r["fees_confirmed"]), (31.4, 28.8, False))  # fee stack checked 2026-11-12
 
     def test_dropship_has_no_postage_or_packaging(self):
         fees = load_yaml("catalogue/fees.yml")

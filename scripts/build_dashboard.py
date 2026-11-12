@@ -16,10 +16,10 @@ from budget_guard import read_stop_marker, spend_state  # noqa: E402
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 
 PHASES = [
-    {"n": 1, "name": "Draft only", "text": "Agents write proposals. You approve and act by hand."},
-    {"n": 2, "name": "Read-only eBay API", "text": "Agents read orders, listings and traffic. Nothing is changed on eBay."},
-    {"n": 3, "name": "Limited live actions", "text": "Chosen actions run behind the approval tiers, one at a time, by pull request."},
-    {"n": 4, "name": "Shopify channel", "text": "A second sales channel, after owner and accountant approval."},
+    {"n": 1, "name": "Niche, SOPs and draft-only agents", "text": "New-baby gifting on eBay UK and Etsy UK (decision 0010). Agents write proposals; you approve and act by hand."},
+    {"n": 2, "name": "Read-only APIs and live research", "text": "eBay Browse and Etsy Seller App reads, UK web search, manual research runs with a schedule switch. Nothing is changed on either channel."},
+    {"n": 3, "name": "Limited live actions", "text": "Orders to approved suppliers inside the stock cap and listing updates, behind the approval tiers, one at a time."},
+    {"n": 4, "name": "Voice and automation", "text": "Twilio call when an order is stuck, a weekly summary call, scheduled research. Stage 2 health products stay off until you open them."},
 ]
 TASK_FIELDS = ("id", "created", "agent", "objective", "why", "tier", "tier_effective", "status", "note",
                "prompt_file", "reply_file", "flags", "decided")
@@ -150,17 +150,20 @@ def build():
                               "approve": cmd + ' approved --reason "why"', "reject": cmd + ' rejected --reason "why"',
                               "defer": cmd + " deferred"})
 
-    ebay, shop = safe_yaml("channels/ebay-uk/config.yml"), safe_yaml("channels/shopify/config.yml")
-    used = {p: [a["name"] for a in agents if a["mode"] == "api" and a["provider"] == p] for p in ("claude", "gemini")}
+    ebay, etsy = safe_yaml("channels/ebay-uk/config.yml"), safe_yaml("channels/etsy-uk/config.yml")
+    used = [a["name"] for a in agents if a["mode"] == "api" and a["provider"] == "claude"]
+    env = os.environ
     connections = [
-        {"id": "claude", "name": "Claude API", "status": "in use" if used["claude"] else "not in use",
-         "detail": "Agents on the API: " + (", ".join(used["claude"]) or "none") + ". Key lives in GitHub secrets, never in the repo."},
-        {"id": "gemini", "name": "Gemini API", "status": "in use" if used["gemini"] else "not in use",
-         "detail": "Agents on the API: " + (", ".join(used["gemini"]) or "none") + ". Free tier."},
+        {"id": "claude", "name": "Claude API", "status": "in use" if used else "not in use",
+         "detail": "Agents on the API: " + (", ".join(used) or "none") + ". Every agent runs on Claude (decision 0002). Key lives in GitHub or Codespaces secrets, never in the repo."},
         {"id": "ebay", "name": "eBay UK", "status": (ebay.get("api") or {}).get("mode", "manual") + " mode",
-         "detail": "Draft only. Needs " + ", ".join((ebay.get("api") or {}).get("secrets", [])) + " as GitHub secrets for Phase 2."},
-        {"id": "shopify", "name": "Shopify", "status": "enabled" if shop.get("enabled") else "not enabled",
-         "detail": "Reserved for Phase 4. Needs owner and accountant approval."},
+         "detail": "Business seller. Needs " + ", ".join((ebay.get("api") or {}).get("secrets", [])) + " as secrets for read-only API use. Browse API shows live listings for you to judge; prices never come from it (API licence)."},
+        {"id": "etsy", "name": "Etsy UK", "status": (etsy.get("api") or {}).get("mode", "manual") + " mode",
+         "detail": "Seller App for our own shop. Needs " + ", ".join((etsy.get("api") or {}).get("secrets", [])) + " as secrets. Lanes: " + ", ".join(etsy.get("lanes") or []) + "."},
+        {"id": "supabase", "name": "Supabase (private database)", "status": "configured" if env.get("SUPABASE_URL") else "no key in this environment",
+         "detail": "Orders, shipments, listings, supplier prices, alerts and daily figures. The only place customer personal data lives. Agents see references and order IDs only."},
+        {"id": "twilio", "name": "Twilio voice", "status": "reserved for Phase 4",
+         "detail": "A call when an order is stuck and a weekly summary call, with a British male voice you choose. No AI features switched on at Twilio."},
     ]
     bdir = ROOT / "memory" / "brain"
     brain = sorted(p.relative_to(bdir).as_posix() for p in bdir.rglob("*.md") if p.name != "README.md") if bdir.exists() else []
@@ -192,6 +195,45 @@ def build():
     elif marker and marker.get("scope") == "agent":
         title = f"AI agent cap reached {marker['agent']} {month}"
 
+    # niche, lanes, policies and fee confirmation (decision 0010)
+    research = safe_yaml("catalogue/research.yml")
+    fees = safe_yaml("catalogue/fees.yml")
+    spend_caps = (load_yaml("governance/budgets.yml").get("spend") or {})
+    stage2 = research.get("stage2_health_products") or {}
+    policies = []
+    for p in sorted((ROOT / "governance" / "policies").glob("*.yml")):
+        y = safe_yaml(p.relative_to(ROOT).as_posix())
+        if not isinstance(y, dict) or "rules" not in y:
+            continue
+        try:
+            age = (datetime.date.today() - datetime.date.fromisoformat(str(y.get("reviewed")))).days
+        except (TypeError, ValueError):
+            age = None
+        every = int(y.get("review_every_days", 90) or 90)
+        policies.append({"file": p.name, "scope": y.get("channel") or y.get("scope") or "", "rules": len(y["rules"]),
+                         "blocks": sum(1 for r in y["rules"] if r.get("severity") == "block"), "reviewed": str(y.get("reviewed") or ""),
+                         "days_old": age, "due_in_days": (every - age) if age is not None else None,
+                         "stale": age is None or age > every, "confirmed": bool(y.get("confirmed_by_owner"))})
+    fee_channels = [{"channel": c, "confirmed": bool(v.get("confirmed")), "fee_pct": v.get("final_value_fee_pct", v.get("platform_commission_pct")),
+                     "fixed_gbp": v.get("fixed_fee_gbp", v.get("payment_fixed_gbp")), "breakdown": v.get("breakdown") or {}}
+                    for c, v in (fees.get("channels") or {}).items()]
+    niche = {
+        "name": research.get("niche", ""), "decision": "docs/decisions/0010-niche-and-sourcing.md",
+        "lanes": research.get("product_lanes") or {}, "fulfilment": research.get("allowed_fulfilment_models") or {},
+        "stage2": {"enabled": bool(stage2.get("enabled")), "channels": stage2.get("channels") or [],
+                   "keywords": len(research.get("stage2_health_keywords") or [])},
+        "limits": {"min_margin_pct": research.get("min_margin_pct"), "first_order_cap_gbp": research.get("first_order_cap_gbp"),
+                   "stock_cap_gbp": spend_caps.get("stock_purchases_monthly_cap"), "ads_cap_gbp": spend_caps.get("social_ads_monthly_cap"),
+                   "supplier_days": research.get("max_supplier_delivery_days"), "partner_days": research.get("max_production_partner_days")},
+        "keywords": {"seed": len(research.get("seed_keywords") or []), "banned": len(research.get("banned_keywords") or []),
+                     "restricted": len(research.get("restricted_keywords") or [])},
+        "policies": policies, "fees": fee_channels, "postage": fees.get("postage_gbp") or {},
+        "channels": [{"id": "ebay-uk", "label": "eBay UK", "enabled": bool(ebay.get("enabled")), "mode": (ebay.get("api") or {}).get("mode", "manual"),
+                      "lanes": list(research.get("product_lanes") or {})},
+                     {"id": "etsy-uk", "label": "Etsy UK", "enabled": bool(etsy.get("enabled")), "mode": (etsy.get("api") or {}).get("mode", "manual"),
+                      "lanes": etsy.get("lanes") or []}],
+    }
+
     data = {
         "month": month,
         "as_of": rows[-1]["date"] if rows else None,
@@ -216,6 +258,7 @@ def build():
         "phases": {"current": 1, "list": PHASES},
         "brain": {"count": len(brain), "notes": brain[:40]},
         "incidents": incidents,
+        "niche": niche,
     }
     body = "# " + title + "\n\n" + "\n".join("- " + x for x in alerts) + \
            "\n\nTo continue before next month, raise total_monthly_cap in governance/budgets.yml by pull request.\n" if title else ""

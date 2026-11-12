@@ -15,6 +15,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_budget import ROOT, load_yaml, month_totals  # noqa: E402
 from pii_guard import find_pii  # noqa: E402
+import brain_search  # noqa: E402
 
 
 def read(rel):
@@ -45,6 +46,7 @@ def main():
     ap.add_argument("--tier", help="haiku, sonnet or opus (only the agent's own tier or its escalation tier)")
     ap.add_argument("--input-file")
     ap.add_argument("--skip-pii-check", action="store_true", help="manual mode only")
+    ap.add_argument("--manual", action="store_true", help="free route: write a ready-to-paste prompt to outbox/ instead of calling the API")
     a = ap.parse_args()
 
     status = load_yaml("governance/status.yml")
@@ -75,17 +77,17 @@ def main():
     if a.input_file:
         path = ROOT / a.input_file
         extra = path.read_text() if path.exists() else open(a.input_file).read()
-    mode = cfg.get("provider", status.get("provider", "manual"))
+    mode = "manual" if a.manual else cfg.get("provider", status.get("provider", "manual"))
     pii = find_pii(a.task + "\n" + extra)
     if pii and not (a.skip_pii_check and mode == "manual"):
         print("Refused: the task looks like it contains personal data (" + ", ".join(pii) + "). Use order IDs instead.")
         return 3
 
     dry = cfg.get("dry_run", status.get("default_dry_run", True))
-    sop = read(f"memory/brain/sops/{a.agent}.md")
+    brain = brain_search.brain_context(a.agent, a.task + "\n" + extra)
     prompt = "\n\n".join(x for x in [
         read("agents/_shared/company-rules.md"), read(f"agents/{a.agent}/prompt.md"),
-        ("## Your SOP\n" + sop) if sop else "", read("agents/_shared/output-schema.md"),
+        brain, read("agents/_shared/output-schema.md"),
         "## Task\n" + a.task, ("## Extra input\n" + extra) if extra else ""] if x.strip())
 
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")

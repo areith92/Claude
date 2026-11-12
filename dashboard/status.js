@@ -16,399 +16,88 @@ window.DASHBOARD = {
   },
   "per_agent": [
     {
-      "agent": "orchestrator",
+      "agent": "chief-of-staff",
       "spent_gbp": 0,
-      "cap_gbp": 2
+      "cap_gbp": 0.8
     },
     {
-      "agent": "listings",
+      "agent": "sourcing",
       "spent_gbp": 0,
-      "cap_gbp": 1.5
+      "cap_gbp": 1.0
     },
     {
-      "agent": "finance",
+      "agent": "merchandiser",
+      "spent_gbp": 0,
+      "cap_gbp": 0.6
+    },
+    {
+      "agent": "fulfilment",
+      "spent_gbp": 0,
+      "cap_gbp": 0.4
+    },
+    {
+      "agent": "customer-care",
       "spent_gbp": 0,
       "cap_gbp": 0.5
     },
     {
-      "agent": "compliance",
+      "agent": "marketing",
       "spent_gbp": 0,
-      "cap_gbp": 1
+      "cap_gbp": 0.5
     },
     {
-      "agent": "techsupport",
+      "agent": "finance-insights",
       "spent_gbp": 0,
-      "cap_gbp": 1
+      "cap_gbp": 0.4
+    },
+    {
+      "agent": "compliance",
+      "spent_gbp": 0,
+      "cap_gbp": 0.3
+    },
+    {
+      "agent": "reviewer",
+      "spent_gbp": 0,
+      "cap_gbp": 0.3
+    },
+    {
+      "agent": "tech-support",
+      "spent_gbp": 0,
+      "cap_gbp": 0.2
     }
   ],
   "alerts": [],
   "queue": {},
   "latest_digest": null,
   "recent_costs": [],
-  "conductor": "orchestrator",
+  "conductor": "chief-of-staff",
   "agents": [
     {
-      "name": "orchestrator",
-      "role": "Plans the work, delegates tasks to department agents, reviews their proposals and prepares one digest for the owner. The owner decides. In free (manual) mode the owner pastes each prompt into the AI named in it.",
+      "name": "chief-of-staff",
+      "role": "Plans each run (max 3 delegated tasks), produces the single digest and approval queue, and keeps the SOP library in memory/brain/sops up to date.",
       "sop": {
         "exists": true,
-        "path": "memory/brain/sops/orchestrator.md",
-        "purpose": "Turn the owner's goal into a few tasks, send each to the right agent, review the replies and give the owner one ranked digest.",
+        "path": "memory/brain/sops/chief-of-staff.md",
+        "purpose": "Plans each run (max 3 delegated tasks), produces the single digest and approval queue, and keeps the SOP library in memory/brain/sops up to date.",
         "steps": [
-          "Run: python3 scripts/orchestrate.py plan --goal \"<goal>\". Paste the prepared prompt into Claude and save the reply in inbox/.",
-          "Choose at most 3 tasks. Only use enabled agents. Give each task a one-line reason and an approval tier. Pick the stricter tier if unsure.",
-          "Run: python3 scripts/orchestrate.py ingest inbox/<file> --delegate. This prepares one prompt per agent.",
-          "Review each reply: did it do the task, with numbers and assumptions? Is the tier right? Does it conflict with governance/policies/? Any personal data, invented facts or claims that something was done?",
-          "Give a verdict per task: ready_for_owner, rework or reject. Ask for a second opinion from the reviewer or compliance agent on anything risky.",
-          "Run: python3 scripts/orchestrate.py digest. The owner decides with decide, does approved work by hand, then runs complete.",
-          "Write a short note for the next run in notes_for_next_run, including what changed since anything the owner rejected."
+          "(write the steps this agent follows each run)"
         ],
-        "tier": "Planning is auto. Anything involving spend, suppliers, new channels, refunds over 20 GBP or VAT or tax is escalated.",
-        "escalate": [
-          "eBay policy warnings or account health problems",
-          "Product safety or legal questions",
-          "VAT or tax (needs the accountant)",
-          "Refunds over 20 GBP, any spend, new suppliers, new channels",
-          "Anything involving customer personal data"
-        ],
-        "never": "Edit governance/, agents/*/permissions.yml, CODEOWNERS or .github/. Perform live actions. Message buyers. Handle bank or card details. Plan work for a disabled agent. Propose spending when the cap is 0."
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
       },
       "enabled": true,
       "dept": "conductor",
-      "model": "claude-sonnet-5-5",
+      "model": "claude",
       "provider": "claude",
       "mode": "api",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 2
-    },
-    {
-      "name": "listings",
-      "role": "Drafts eBay UK titles, descriptions and item specifics from catalogue data, following governance/policies/listing-rules.md.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/listings.md",
-        "purpose": "Write a clear, accurate eBay UK listing draft from catalogue data.",
-        "steps": [
-          "Read the product data. List any required field that is missing instead of guessing it.",
-          "Write the title within eBay's 80-character limit. Lead with brand and product, then key details. No keyword stuffing or capitals for emphasis.",
-          "Write the description from the data only: condition, what is included, size and weight, delivery and returns as set in channels/ebay-uk/.",
-          "Fill item specifics (brand, condition, and anything in the schema). Suggest a category and say if you are unsure.",
-          "Use the catalogue price. If none is set, ask for the pricing agent. Never set your own.",
-          "List the image file names to use. Do not describe images you have not been given.",
-          "Check your draft against listing-rules.md and channels/ebay-uk/rules.md. Note any rule you needed that is not written down."
-        ],
-        "tier": "Drafting is auto. Publishing or revising a live listing needs_approval from the owner.",
-        "escalate": [
-          "listing-rules.md is incomplete and a rule you need is missing",
-          "The product might be restricted or unsafe",
-          "Brand or authenticity claims you cannot check from the data"
-        ],
-        "never": "Publish or edit a live listing. Invent specifications, features or condition. Copy another seller's text or images. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "sales",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "api",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 1.5
-    },
-    {
-      "name": "orders",
-      "role": "Reviews new orders by order ID, proposes shipping choices and flags delivery problems.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/orders.md",
-        "purpose": "Review new orders by order ID, propose how to ship them and flag delivery problems early.",
-        "steps": [
-          "List the orders by order ID with SKU, quantity and the handling-time deadline.",
-          "Check stock for each SKU. Flag any order you cannot fulfil from stock.",
-          "Propose the carrier and service per the business policies, with the reason (weight, value, speed promised).",
-          "Flag risks: tight handling deadline, heavy or large item, high value needing tracking or insurance, signs of a delivery problem.",
-          "For a delivery problem, propose the next step (check tracking, contact the carrier, hand over to the returns agent) without contacting anyone yourself.",
-          "Summarise what needs doing today, in priority order."
-        ],
-        "tier": "Triage and proposals are auto. Any refund, compensation or goodwill credit over 20 GBP needs_approval.",
-        "escalate": [
-          "Missing stock for an order",
-          "Possible fraud signs",
-          "Delivery claims or disputes (hand to returns)"
-        ],
-        "never": "Buy postage or book collections. Contact buyers or carriers. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "operations",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "messages",
-      "role": "Triages buyer messages and drafts replies. Escalates refunds, disputes and complaints to the owner.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/messages.md",
-        "purpose": "Sort buyer messages, draft polite accurate replies and escalate anything sensitive.",
-        "steps": [
-          "Remove or ignore any personal data. Refer to the buyer by order ID only.",
-          "Classify the message: question, delivery, return, damage, dispute, complaint or other.",
-          "Draft a reply in friendly UK English: acknowledge, answer from the business policies, say what happens next. Keep it short.",
-          "Do not promise refunds, replacements or compensation. If one may be needed, escalate.",
-          "Escalate refunds, disputes, complaints, safety issues and legal threats to the owner with a one-line summary.",
-          "Keep every reply inside eBay messaging."
-        ],
-        "tier": "Triage and drafts are auto. Replying to a buyer needs_approval, and anything touching a refund is escalated.",
-        "escalate": [
-          "Refund, dispute or complaint",
-          "Safety issue or legal threat",
-          "A buyer asks to move the conversation off eBay"
-        ],
-        "never": "Send messages. Message buyers outside eBay. Promise refunds or compensation. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "customer",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "finance",
-      "role": "Reconciles payouts, fees and refunds and prepares the monthly accountant pack. Never gives tax advice.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/finance.md",
-        "purpose": "Keep the numbers straight and prepare the monthly pack for the accountant. Never give tax advice.",
-        "steps": [
-          "Run: python3 scripts/new_accountant_pack.py. It creates reports/accountant-pack/<month>/CHECKLIST.md.",
-          "Reconcile payouts against sales, fees and refunds. Show the working and any difference.",
-          "Total the costs: postage, stock, eBay fees, AI spend from logs/costs.csv.",
-          "List every question about VAT or tax separately for the accountant. Do not answer them.",
-          "Tick the checklist items you could complete and list those you could not.",
-          "Confirm the pack has no customer personal data."
-        ],
-        "tier": "Reconciliation and reports are auto. Anything on VAT or tax treatment, or changing bookkeeping categories, is needs_owner_and_accountant.",
-        "escalate": [
-          "Any VAT or tax question",
-          "A difference you cannot explain",
-          "A change to bookkeeping categories"
-        ],
-        "never": "Move money or touch bank or card details. Decide tax treatment. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "finance",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0.5
-    },
-    {
-      "name": "compliance",
-      "role": "Checks proposed listings and actions against eBay rules, company policies and UK consumer-law notes in governance/policies/.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/compliance.md",
-        "purpose": "Check proposed listings and actions against eBay rules, company policy and the UK consumer-law notes, and say clearly what passes and what does not.",
-        "steps": [
-          "Read the proposal and the rules that apply to it.",
-          "Check it against each rule. For each, say pass, flag or block and give the reason.",
-          "Where a policy file is a draft or silent, say exactly which rule is missing and what you assumed. Do not invent rules.",
-          "Check the approval tier is right under governance/approval-tiers.yml.",
-          "Note anything that touches consumer rights, product safety or data protection for the owner to look at.",
-          "Give an overall result: pass, pass with flags, or block."
-        ],
-        "tier": "Checking is auto. A block always goes to the owner.",
-        "escalate": [
-          "Possible breach of eBay rules or consumer law",
-          "Product safety concerns",
-          "Data protection issues"
-        ],
-        "never": "Give final legal rulings. You are not a lawyer: say when professional advice is needed. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "compliance",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "api",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 1
-    },
-    {
-      "name": "reviewer",
-      "role": "Gives an independent second opinion on high-risk proposals before they reach the owner.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/reviewer.md",
-        "purpose": "Give an independent second opinion on high-risk proposals before they reach the owner.",
-        "steps": [
-          "Read the task first, then the proposal. Do not rely on the author's summary.",
-          "Check the numbers and assumptions yourself and show your working.",
-          "Check the approval tier against governance/approval-tiers.yml and its thresholds.",
-          "Check for policy conflicts, personal data, invented facts and claims that something was done.",
-          "Say what you checked and what you could not check.",
-          "Give a verdict: ready_for_owner, rework or reject, with the main reason."
-        ],
-        "tier": "Reviews are auto. The proposal keeps its own tier.",
-        "escalate": [
-          "Anything you think is unsafe or against policy",
-          "A proposal you cannot assess from what you were given"
-        ],
-        "never": "Approve or publish anything. Change the proposal yourself. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "compliance",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "api",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "monitor",
-      "role": "Watches AI spend, budgets, errors and account health signals. Mostly done by scripts.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/monitor.md",
-        "purpose": "Watch AI spend, budgets, errors and account health signals. Most of this is done by scripts. Raise problems so Tech Support can fix them.",
-        "steps": [
-          "Run: python3 scripts/techsupport.py detect. It runs the five health checks and raises an incident for each failure.",
-          "Check AI spend against the caps. At 80 percent, tell the owner. At the cap, calls stop and an alert is raised.",
-          "Read the dashboard alerts and the Budget alert and Monitor issues on GitHub.",
-          "For a problem the checks miss, describe it and give the owner the command: python3 scripts/techsupport.py raise --title \"...\" --details \"...\".",
-          "For a security problem (a key exposed, something running that should not), tell the owner to run the Kill switch workflow, then follow operations/incident-response.md.",
-          "Report what you checked, what is healthy and what needs attention."
-        ],
-        "tier": "Monitoring and reports are auto. Raising spend caps is a pull request the owner approves.",
-        "escalate": [
-          "Any exposed key",
-          "Spend at or near a cap",
-          "eBay account health warnings",
-          "Repeated failures"
-        ],
-        "never": "Raise or remove a cap yourself. Run live actions. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "monitoring",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "techsupport",
-      "role": "Fixes problems in this repo's own systems (scripts, tests, dashboard, docs, agent briefs) when the monitor raises an incident. Finds the root cause, proposes the smallest safe fix as exact file changes, and learns from failed attempts. It never touches eBay, money or customers.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/techsupport.md",
-        "purpose": "Fix problems in this repo's own systems when the monitor raises an incident: find the cause, propose the smallest safe fix, and let the scripts test and verify it.",
-        "steps": [
-          "Read the evidence and the supplied files. Find the root cause before proposing anything.",
-          "Propose the smallest fix as exact file changes: replace (old text must appear once) or write for a new file. Maximum 4 files.",
-          "Change only scripts/, tests/, docs/, dashboard/ (not status files) and agents/*/prompt.md directly. Changes to governance/, models/, channels/, .github/, CODEOWNERS, CLAUDE.md, permissions, tools or the safety scripts are proposals for the owner.",
-          "Never weaken a test or a safety check to make something pass.",
-          "Reply with one fenced json block: diagnosis, root_cause, risk, changes, verify.",
-          "The script tests your fix in a scratch copy, applies it on a branch fix/inc-..., and checks it again in the real working tree.",
-          "If an attempt fails, read the failure output and take a different approach. After 2 attempts, explain what the owner needs to decide.",
-          "The owner pushes the branch and merges it. After they pull, the script runs resolve to verify the fix once more."
-        ],
-        "tier": "A fix to scripts, tests, docs or dashboard is needs_approval (the owner merges). Owner-only files are applied only if the owner passes --include-owner-files.",
-        "escalate": [
-          "A fix needs governance, models, workflow, permission or safety-script changes",
-          "You cannot find a safe fix",
-          "The same incident keeps coming back"
-        ],
-        "never": "Push or merge. Touch logs/, inbox/, outbox/, reports/, operations/, memory/ or secrets. Add keys or personal data. Suggest commands for the owner to run as part of the fix. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "support",
-      "model": "claude-sonnet-5-5",
-      "provider": "claude",
-      "mode": "api",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 1
-    },
-    {
-      "name": "pricing",
-      "role": "Proposes price changes within catalogue/pricing-rules.yml.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/pricing.md",
-        "purpose": "Propose prices that respect the pricing rules and show the working.",
-        "steps": [
-          "Read pricing-rules.yml: minimum margin 20 percent, never below cost, round to .99, automatic change limit 5 percent.",
-          "Work out margin: (price - cost - eBay fees - postage) / price. Flag that the eBay fee assumption is still 0 and the result may be overstated.",
-          "Propose the new price rounded to .99. Show the working.",
-          "If the change is more than 5 percent from the current price, mark it needs_approval.",
-          "If the price would breach the minimum margin or fall below cost, do not propose it. Explain and suggest alternatives.",
-          "Summarise the effect on margin."
-        ],
-        "tier": "A change of 5 percent or less is auto. A larger change needs_approval.",
-        "escalate": [
-          "Margin below 20 percent",
-          "Missing cost data",
-          "A request to price below cost"
-        ],
-        "never": "Change prices directly. Propose a price below cost. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "sales",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "research",
-      "role": "Finds product opportunities for the UK. Chooses up to 20 search keywords (never cars or car parts), reads the market data the owner or an API provides, summarises bad-review themes and listing weaknesses, and ranks candidates. It does not browse or scrape: data comes in through scripts/research.py.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/research.md",
-        "purpose": "Choose where to look, make sense of the market data, and rank candidate products. You never browse or scrape: data arrives through scripts/research.py.",
-        "steps": [
-          "Read the banned list first. Never choose cars, car parts, vehicles or anything banned.",
-          "Choose up to 20 search keywords. Prefer small, light, durable items with steady demand, few safety rules and room for a 30 percent margin.",
-          "For each keyword say why it looks promising, what to look for in the results and the main risk.",
-          "Check the lessons from denied products and do not repeat them unless the reason no longer applies.",
-          "When data arrives, summarise demand (sold per month, number of competing listings) and note anything unreliable.",
-          "Group the bad-review themes and say what a better product or listing would do about each.",
-          "Rank the candidates and say which ones the rules rejected and why."
-        ],
-        "tier": "Research and ranking are auto. Nothing is bought or listed from here.",
-        "escalate": [
-          "Data that looks wrong or incomplete",
-          "A promising product that needs documents (safety, brand)",
-          "Any request to scrape a site"
-        ],
-        "never": "Scrape or browse. Pick banned categories. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "research",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 0.8
     },
     {
       "name": "sourcing",
-      "role": "Checks suppliers for the products that survive the rules: cost, shipping, delivery time, rating, minimum order, and the fulfilment model. Prefers stock you hold or a real wholesaler. Never proposes buying from a marketplace to ship straight to an eBay buyer.",
+      "role": "Scans about 20 eBay UK products on keywords it chooses (never cars or car parts), then finds wholesale or manufacturer cost, shipping cost and delivery time (within 5 days) from suppliers you have an agreement with, or from stock you hold, and maintains catalogue/suppliers/approved-suppliers.yml. Never proposes buying from a retailer or marketplace (such as AliExpress or Amazon) and shipping straight to the buyer, which eBay does not allow.",
       "sop": {
         "exists": true,
         "path": "memory/brain/sops/sourcing.md",
@@ -432,167 +121,194 @@ window.DASHBOARD = {
       },
       "enabled": true,
       "dept": "research",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "facebook",
-      "role": "Looks after the Facebook Page: replies to comments and Messenger messages from drafts you approve, escalates anything sensitive.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/facebook.md",
-        "purpose": "Answer Facebook comments and Messenger messages helpfully and safely, with drafts a person approves.",
-        "steps": [
-          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
-          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
-          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
-          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
-          "Reply inside 24 hours of the customer's message: that is Meta's standard window and a late reply may not be allowed to send.",
-          "A comment can get one private reply within 7 days. Do not plan a follow-up unless the customer answers.",
-          "If a reply is automated, it must say so (governance/inbox.yml holds the wording).",
-          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
-          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
-          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
-        ],
-        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
-        "escalate": [
-          "Safety, medical or legal words",
-          "Chargebacks, disputes or threats",
-          "Anything about a refund or compensation",
-          "A customer who is upset or has written more than twice",
-          "A message you cannot answer from the facts you have"
-        ],
-        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": true,
-      "dept": "customer",
-      "model": "claude-sonnet-5-5",
+      "model": "claude",
       "provider": "claude",
       "mode": "manual",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 1.0
     },
     {
-      "name": "instagram",
-      "role": "Looks after the Instagram account: replies to comments, DMs and story replies from drafts you approve, escalates anything sensitive.",
+      "name": "merchandiser",
+      "role": "Writes eBay UK listings and proposes prices within catalogue/pricing-rules.yml (minimum 30 percent margin), working through the channel adapter so sales channels can be swapped.",
       "sop": {
         "exists": true,
-        "path": "memory/brain/sops/instagram.md",
-        "purpose": "Answer Instagram comments, DMs and story replies helpfully and safely, with drafts a person approves.",
+        "path": "memory/brain/sops/merchandiser.md",
+        "purpose": "Writes eBay UK listings and proposes prices within catalogue/pricing-rules.yml (minimum 30 percent margin), working through the channel adapter so sales channels can be swapped.",
         "steps": [
-          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
-          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
-          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
-          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
-          "Reply inside 24 hours of a DM or a story reply: that is Meta's standard window.",
-          "A comment can get one private reply within 7 days, and the customer must answer before you can continue.",
-          "Keep public replies short and point to the link in the bio for product pages. If a reply is automated, it must say so.",
-          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
-          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
-          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+          "(write the steps this agent follows each run)"
         ],
-        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
-        "escalate": [
-          "Safety, medical or legal words",
-          "Chargebacks, disputes or threats",
-          "Anything about a refund or compensation",
-          "A customer who is upset or has written more than twice",
-          "A message you cannot answer from the facts you have"
-        ],
-        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
       },
       "enabled": true,
-      "dept": "customer",
-      "model": "claude-sonnet-5-5",
+      "dept": "sales",
+      "model": "claude",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0.6
+    },
+    {
+      "name": "finance-insights",
+      "role": "Checks margins (minimum 30 percent), tracks spend against earnings and profit and loss, reports engagement, buyers and abandoned carts, and prepares the accountant pack. Never gives tax advice.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/finance-insights.md",
+        "purpose": "Checks margins (minimum 30 percent), tracks spend against earnings and profit and loss, reports engagement, buyers and abandoned carts, and prepares the accountant pack. Never gives tax advice.",
+        "steps": [
+          "(write the steps this agent follows each run)"
+        ],
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
+      },
+      "enabled": true,
+      "dept": "finance",
+      "model": "claude",
       "provider": "claude",
       "mode": "manual",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 0.4
     },
     {
-      "name": "tiktok",
-      "role": "Looks after TikTok comments and messages: drafts replies you approve, escalates anything sensitive.",
+      "name": "compliance",
+      "role": "Checks proposals against eBay rules, UK consumer-law notes, advertising rules and data protection.",
       "sop": {
         "exists": true,
-        "path": "memory/brain/sops/tiktok.md",
-        "purpose": "Answer TikTok comments and messages helpfully and safely, with drafts a person approves.",
+        "path": "memory/brain/sops/compliance.md",
+        "purpose": "Check proposed listings and actions against eBay rules, company policy and the UK consumer-law notes, and say clearly what passes and what does not.",
         "steps": [
-          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
-          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
-          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
-          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
-          "Keep public replies short and on-brand, and answer the question in the comment itself where you can.",
-          "Direct messages and TikTok Shop messages follow TikTok's own rules, which can change. Check the current rules before relying on any automation.",
-          "Never move a customer to an unofficial channel.",
-          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
-          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
-          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+          "Read the proposal and the rules that apply to it.",
+          "Check it against each rule. For each, say pass, flag or block and give the reason.",
+          "Where a policy file is a draft or silent, say exactly which rule is missing and what you assumed. Do not invent rules.",
+          "Check the approval tier is right under governance/approval-tiers.yml.",
+          "Note anything that touches consumer rights, product safety or data protection for the owner to look at.",
+          "Give an overall result: pass, pass with flags, or block."
         ],
-        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
+        "tier": "Checking is auto. A block always goes to the owner.",
         "escalate": [
-          "Safety, medical or legal words",
-          "Chargebacks, disputes or threats",
-          "Anything about a refund or compensation",
-          "A customer who is upset or has written more than twice",
-          "A message you cannot answer from the facts you have"
+          "Possible breach of eBay rules or consumer law",
+          "Product safety concerns",
+          "Data protection issues"
         ],
-        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+        "never": "Give final legal rulings. You are not a lawyer: say when professional advice is needed. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
       },
       "enabled": true,
-      "dept": "customer",
-      "model": "claude-sonnet-5-5",
+      "dept": "compliance",
+      "model": "claude",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0.3
+    },
+    {
+      "name": "reviewer",
+      "role": "Gives an independent, adversarial second opinion in a fresh context before proposals reach the owner. Use the opus tier for high-risk items.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/reviewer.md",
+        "purpose": "Give an independent second opinion on high-risk proposals before they reach the owner.",
+        "steps": [
+          "Read the task first, then the proposal. Do not rely on the author's summary.",
+          "Check the numbers and assumptions yourself and show your working.",
+          "Check the approval tier against governance/approval-tiers.yml and its thresholds.",
+          "Check for policy conflicts, personal data, invented facts and claims that something was done.",
+          "Say what you checked and what you could not check.",
+          "Give a verdict: ready_for_owner, rework or reject, with the main reason."
+        ],
+        "tier": "Reviews are auto. The proposal keeps its own tier.",
+        "escalate": [
+          "Anything you think is unsafe or against policy",
+          "A proposal you cannot assess from what you were given"
+        ],
+        "never": "Approve or publish anything. Change the proposal yourself. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
+      },
+      "enabled": true,
+      "dept": "compliance",
+      "model": "claude",
+      "provider": "claude",
+      "mode": "api",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0.3
+    },
+    {
+      "name": "tech-support",
+      "role": "Takes problems flagged by the monitoring scripts, finds and tests a fix, and proposes it as a pull request. The owner decides whether to merge.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/tech-support.md",
+        "purpose": "Takes problems flagged by the monitoring scripts, finds and tests a fix, and proposes it as a pull request. The owner decides whether to merge.",
+        "steps": [
+          "(write the steps this agent follows each run)"
+        ],
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
+      },
+      "enabled": true,
+      "dept": "support",
+      "model": "claude",
       "provider": "claude",
       "mode": "manual",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 0.2
     },
     {
-      "name": "pinterest",
-      "role": "Looks after Pinterest comments and messages: drafts replies you approve, escalates anything sensitive.",
+      "name": "fulfilment",
+      "role": "Reviews orders by order ID, proposes supplier orders and shipping, runs the daily parcel checks and courier tracking, and flags parcels past their delivery time.",
       "sop": {
         "exists": true,
-        "path": "memory/brain/sops/pinterest.md",
-        "purpose": "Answer Pinterest comments and questions on pins helpfully and safely, with drafts a person approves.",
+        "path": "memory/brain/sops/fulfilment.md",
+        "purpose": "Reviews orders by order ID, proposes supplier orders and shipping, runs the daily parcel checks and courier tracking, and flags parcels past their delivery time.",
         "steps": [
-          "Read the message from python3 scripts/inbox.py list. Personal data has already been removed. Refer to the customer by order ID only, and never ask for an address, card details or a password.",
-          "Use the category and template the triage chose. If a template fits and its facts are filled in, adapt it lightly. If facts are missing, say which ones and do not invent them.",
-          "Write short, warm UK English that sounds like a person. Answer the question, say what happens next and by when (only if that time is a filled-in fact).",
-          "Never promise a refund, replacement, compensation or a delivery date. Never give safety, medical, tax or legal advice.",
-          "Most contact is a question on a pin. Answer briefly and point to the product page.",
-          "Messages are rare. Treat them like any other customer message and follow the same escalation rules.",
-          "If the message is public, reply briefly in public and move any order detail to a private message. Never argue in public.",
-          "Escalate to the owner: safety problems, legal words, chargebacks and disputes, threats or abuse, press, anything about a refund, and anything you are unsure of.",
-          "Hide or report spam and abuse in the platform. Never delete genuine criticism."
+          "(write the steps this agent follows each run)"
         ],
-        "tier": "Triage and drafts are auto. Sending any reply needs_approval until governance/inbox.yml allows a category to auto-send, and refunds, complaints and delivery problems are never auto.",
-        "escalate": [
-          "Safety, medical or legal words",
-          "Chargebacks, disputes or threats",
-          "Anything about a refund or compensation",
-          "A customer who is upset or has written more than twice",
-          "A message you cannot answer from the facts you have"
-        ],
-        "never": "Send messages. Take payments or card details. Promise refunds, compensation or delivery dates. Share another customer's details. Argue in public. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
       },
       "enabled": true,
-      "dept": "customer",
-      "model": "claude-sonnet-5-5",
+      "dept": "operations",
+      "model": "claude",
       "provider": "claude",
       "mode": "manual",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 0.4
+    },
+    {
+      "name": "customer-care",
+      "role": "Handles buyer messages from eBay and social channels, returns and disputes, using built-in replies and the refund limits. Escalates tricky cases.",
+      "sop": {
+        "exists": true,
+        "path": "memory/brain/sops/customer-care.md",
+        "purpose": "Handles buyer messages from eBay and social channels, returns and disputes, using built-in replies and the refund limits. Escalates tricky cases.",
+        "steps": [
+          "(write the steps this agent follows each run)"
+        ],
+        "tier": "",
+        "escalate": [],
+        "never": "- Act without approval, or use customer personal data."
+      },
+      "enabled": true,
+      "dept": "customer",
+      "model": "claude",
+      "provider": "claude",
+      "mode": "manual",
+      "dry_run": true,
+      "spent_gbp": 0,
+      "cap_gbp": 0.5
     },
     {
       "name": "marketing",
-      "role": "Plans the content calendar, writes post briefs and captions for each platform, and proposes ad campaigns inside the monthly ad budget. It never publishes and never sees customer messages.",
+      "role": "Drafts social posts and replies using one playbook per platform, plans the monthly ad budget and email follow-ups. Drafts need owner approval before publishing.",
       "sop": {
         "exists": true,
         "path": "memory/brain/sops/marketing.md",
@@ -615,109 +331,14 @@ window.DASHBOARD = {
         ],
         "never": "Publish, post, pay for ads or message customers. Invent reviews, scarcity or results. Use a competitor's images. Give tax or legal advice. Include customer names, addresses, emails or phone numbers. Say an action has been done. Guess when information is missing: list it under Questions for the human."
       },
-      "enabled": true,
+      "enabled": false,
       "dept": "marketing",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "inventory",
-      "role": "Tracks stock, proposes reorders and compares suppliers.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/inventory.md",
-        "purpose": "Track stock, propose reorders and compare suppliers.",
-        "steps": [
-          "List products with low stock or slow sales, with the numbers.",
-          "Estimate the reorder quantity from sales rate and supplier lead time. State the assumptions.",
-          "Compare suppliers from catalogue/suppliers/ on price, lead time and reliability if known.",
-          "Write the reorder proposal with total cost. Any reorder needs_approval; flag if a single spend is over 25 GBP.",
-          "A supplier not in the catalogue is a new supplier: needs_approval.",
-          "List slow movers and suggest what the owner might do."
-        ],
-        "tier": "Analysis is auto. Reordering stock and any new supplier is needs_approval.",
-        "escalate": [
-          "Any spend",
-          "A new supplier",
-          "Stock-outs on best sellers"
-        ],
-        "never": "Place orders or pay suppliers. Contact suppliers. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": false,
-      "dept": "operations",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "returns",
-      "role": "Handles return requests and cases within governance/policies/refunds.md.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/returns.md",
-        "purpose": "Handle return requests and cases within the refunds policy, and escalate what needs the owner.",
-        "steps": [
-          "Identify the reason: changed mind, not as described, damaged, wrong item, not received.",
-          "Check the case against the returns terms in the business policies and refunds.md. If refunds.md is silent, say so.",
-          "Propose an outcome (accept return, partial refund, replacement, decline with reason) and the cost.",
-          "Any refund over 20 GBP, or any goodwill credit, needs_approval. Disputes and complaints go to the owner.",
-          "Draft a neutral message for the owner to approve. Do not promise anything.",
-          "Record the lesson for the brain notes if the case shows a pattern (no personal data)."
-        ],
-        "tier": "Triage is auto. Refunds over 20 GBP and goodwill credits are needs_approval.",
-        "escalate": [
-          "Refund over 20 GBP",
-          "Dispute, complaint or safety issue",
-          "Possible fraud"
-        ],
-        "never": "Issue refunds or reply to buyers. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": false,
-      "dept": "operations",
-      "model": "claude-sonnet-5-5",
+      "model": "claude",
       "provider": "claude",
       "mode": "manual",
       "dry_run": true,
       "spent_gbp": 0,
-      "cap_gbp": 0
-    },
-    {
-      "name": "analytics",
-      "role": "Calculates margin per product and prepares dashboard data.",
-      "sop": {
-        "exists": true,
-        "path": "memory/brain/sops/analytics.md",
-        "purpose": "Calculate margin per product and prepare data for reports and the dashboard.",
-        "steps": [
-          "Collect price, cost, eBay fees and postage for each product.",
-          "Work out margin per product: (price - cost - fees - postage) / price. Show the working.",
-          "Flag products below the 20 percent minimum margin and any with missing data.",
-          "Flag that the eBay fee assumption is still 0 if it has not been filled in.",
-          "Produce a table sorted by margin and a three-line summary of what stands out.",
-          "Note what data you need to be more accurate."
-        ],
-        "tier": "All reporting is auto.",
-        "escalate": [
-          "Products losing money",
-          "Missing or inconsistent data"
-        ],
-        "never": "Change catalogue data or prices. Give tax or legal advice. Include customer names, addresses, emails or phone numbers (use order IDs). Say an action has been done. Guess when information is missing: list it under Questions for the human."
-      },
-      "enabled": false,
-      "dept": "finance",
-      "model": "gemini-3.8-flash",
-      "provider": "gemini",
-      "mode": "manual",
-      "dry_run": true,
-      "spent_gbp": 0,
-      "cap_gbp": 0
+      "cap_gbp": 0.5
     }
   ],
   "departments": [
@@ -726,11 +347,12 @@ window.DASHBOARD = {
       "label": "Sales",
       "color": "#ff4d6d",
       "agents": [
-        "listings",
-        "pricing"
+        "merchandiser"
       ],
       "tools": [
         "eBay UK listings",
+        "Etsy UK listings",
+        "Gift box builder",
         "Catalogue"
       ]
     },
@@ -739,13 +361,13 @@ window.DASHBOARD = {
       "label": "Operations",
       "color": "#22d3ee",
       "agents": [
-        "orders",
-        "inventory",
-        "returns"
+        "fulfilment"
       ],
       "tools": [
-        "eBay UK orders",
-        "Stock sheet"
+        "eBay and Etsy orders",
+        "Stock in hand",
+        "Production partner orders",
+        "Courier tracking"
       ]
     },
     {
@@ -753,14 +375,11 @@ window.DASHBOARD = {
       "label": "Customer care",
       "color": "#3b82f6",
       "agents": [
-        "messages",
-        "facebook",
-        "instagram",
-        "tiktok",
-        "pinterest"
+        "customer-care"
       ],
       "tools": [
         "eBay messages",
+        "Etsy messages",
         "Social inbox",
         "Reply templates"
       ]
@@ -770,11 +389,12 @@ window.DASHBOARD = {
       "label": "Finance",
       "color": "#34d399",
       "agents": [
-        "finance",
-        "analytics"
+        "finance-insights"
       ],
       "tools": [
+        "Margin calculator",
         "Cost log",
+        "Stock budget",
         "Accountant pack"
       ]
     },
@@ -787,6 +407,7 @@ window.DASHBOARD = {
         "reviewer"
       ],
       "tools": [
+        "Children's product checklist",
         "Policies",
         "Approval tiers"
       ]
@@ -795,9 +416,7 @@ window.DASHBOARD = {
       "id": "monitoring",
       "label": "Monitoring",
       "color": "#fbbf24",
-      "agents": [
-        "monitor"
-      ],
+      "agents": [],
       "tools": [
         "Health checks",
         "Budget guard",
@@ -809,12 +428,11 @@ window.DASHBOARD = {
       "label": "Research",
       "color": "#2dd4bf",
       "agents": [
-        "research",
         "sourcing"
       ],
       "tools": [
-        "Research CSV import",
-        "Margin calculator",
+        "Supplier packs",
+        "Research runs",
         "Compliance gate"
       ]
     },
@@ -836,7 +454,7 @@ window.DASHBOARD = {
       "label": "Tech Support",
       "color": "#fb923c",
       "agents": [
-        "techsupport"
+        "tech-support"
       ],
       "tools": [
         "Incident queue",
@@ -851,25 +469,31 @@ window.DASHBOARD = {
       "id": "claude",
       "name": "Claude API",
       "status": "in use",
-      "detail": "Agents on the API: orchestrator, listings, compliance, techsupport. Key lives in GitHub secrets, never in the repo."
-    },
-    {
-      "id": "gemini",
-      "name": "Gemini API",
-      "status": "in use",
-      "detail": "Agents on the API: reviewer. Free tier."
+      "detail": "Agents on the API: chief-of-staff, merchandiser, compliance, reviewer. Every agent runs on Claude (decision 0002). Key lives in GitHub or Codespaces secrets, never in the repo."
     },
     {
       "id": "ebay",
       "name": "eBay UK",
       "status": "manual mode",
-      "detail": "Draft only. Needs EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REFRESH_TOKEN as GitHub secrets for Phase 2."
+      "detail": "Business seller. Needs EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_REFRESH_TOKEN as secrets for read-only API use. Browse API shows live listings for you to judge; prices never come from it (API licence)."
     },
     {
-      "id": "shopify",
-      "name": "Shopify",
-      "status": "not enabled",
-      "detail": "Reserved for Phase 4. Needs owner and accountant approval."
+      "id": "etsy",
+      "name": "Etsy UK",
+      "status": "manual mode",
+      "detail": "Seller App for our own shop. Needs ETSY_API_KEY, ETSY_SHARED_SECRET, ETSY_REFRESH_TOKEN as secrets. Lanes: etsy_gift_box, etsy_designed, etsy_personalised."
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase (private database)",
+      "status": "configured",
+      "detail": "Orders, shipments, listings, supplier prices, alerts and daily figures. The only place customer personal data lives. Agents see references and order IDs only."
+    },
+    {
+      "id": "twilio",
+      "name": "Twilio voice",
+      "status": "reserved for Phase 4",
+      "detail": "A call when an order is stuck and a weekly summary call, with a British male voice you choose. No AI features switched on at Twilio."
     }
   ],
   "phases": {
@@ -877,31 +501,33 @@ window.DASHBOARD = {
     "list": [
       {
         "n": 1,
-        "name": "Draft only",
-        "text": "Agents write proposals. You approve and act by hand."
+        "name": "Niche, SOPs and draft-only agents",
+        "text": "New-baby gifting on eBay UK and Etsy UK (decision 0010). Agents write proposals; you approve and act by hand."
       },
       {
         "n": 2,
-        "name": "Read-only eBay API",
-        "text": "Agents read orders, listings and traffic. Nothing is changed on eBay."
+        "name": "Read-only APIs and live research",
+        "text": "eBay Browse and Etsy Seller App reads, UK web search, manual research runs with a schedule switch. Nothing is changed on either channel."
       },
       {
         "n": 3,
         "name": "Limited live actions",
-        "text": "Chosen actions run behind the approval tiers, one at a time, by pull request."
+        "text": "Orders to approved suppliers inside the stock cap and listing updates, behind the approval tiers, one at a time."
       },
       {
         "n": 4,
-        "name": "Shopify channel",
-        "text": "A second sales channel, after owner and accountant approval."
+        "name": "Voice and automation",
+        "text": "Twilio call when an order is stuck, a weekly summary call, scheduled research. Stage 2 health products stay off until you open them."
       }
     ]
   },
   "brain": {
-    "count": 41,
+    "count": 47,
     "notes": [
       "sops/analytics.md",
+      "sops/chief-of-staff.md",
       "sops/compliance.md",
+      "sops/customer-care.md",
       "sops/departments/company.md",
       "sops/departments/compliance.md",
       "sops/departments/customer-care.md",
@@ -913,11 +539,14 @@ window.DASHBOARD = {
       "sops/departments/sales.md",
       "sops/departments/tech-support.md",
       "sops/facebook.md",
+      "sops/finance-insights.md",
       "sops/finance.md",
+      "sops/fulfilment.md",
       "sops/instagram.md",
       "sops/inventory.md",
       "sops/listings.md",
       "sops/marketing.md",
+      "sops/merchandiser.md",
       "sops/messages.md",
       "sops/monitor.md",
       "sops/orchestrator.md",
@@ -934,12 +563,7 @@ window.DASHBOARD = {
       "sops/procedures/return-and-refund.md",
       "sops/procedures/social-post-approval.md",
       "sops/procedures/supplier-price-rise.md",
-      "sops/procedures/weekly-owner-review.md",
-      "sops/research.md",
-      "sops/returns.md",
-      "sops/reviewer.md",
-      "sops/sourcing.md",
-      "sops/techsupport.md"
+      "sops/procedures/weekly-owner-review.md"
     ]
   },
   "incidents": [
@@ -973,5 +597,165 @@ window.DASHBOARD = {
       ],
       "next": []
     }
-  ]
+  ],
+  "niche": {
+    "name": "new-baby and expectant-parent gifting, UK only",
+    "decision": "docs/decisions/0010-niche-and-sourcing.md",
+    "lanes": {
+      "ebay_resale": "wholesale item from a UK brand or wholesaler, sold as it is",
+      "etsy_gift_box": "curated gift box: different item types, more than one brand, every item listed",
+      "etsy_designed": "our original design (AI-assisted designs disclosed), made by a disclosed production partner",
+      "etsy_personalised": "buyer's own text or image, made by a disclosed production partner"
+    },
+    "fulfilment": {
+      "ebay-uk": [
+        "hold_stock",
+        "production_partner"
+      ],
+      "etsy-uk": [
+        "hold_stock",
+        "production_partner"
+      ],
+      "social": [
+        "hold_stock",
+        "production_partner"
+      ]
+    },
+    "stage2": {
+      "enabled": false,
+      "channels": [
+        "ebay-uk"
+      ],
+      "keywords": 19
+    },
+    "limits": {
+      "min_margin_pct": 30,
+      "first_order_cap_gbp": 300,
+      "stock_cap_gbp": 300,
+      "ads_cap_gbp": 100,
+      "supplier_days": 5,
+      "partner_days": 7
+    },
+    "keywords": {
+      "seed": 15,
+      "banned": 46,
+      "restricted": 28
+    },
+    "policies": [
+      {
+        "file": "children-product-safety.yml",
+        "scope": "all channels",
+        "rules": 8,
+        "blocks": 2,
+        "reviewed": "2026-11-12",
+        "days_old": 0,
+        "due_in_days": 90,
+        "stale": false,
+        "confirmed": false
+      },
+      {
+        "file": "ebay-uk-compliance.yml",
+        "scope": "ebay-uk",
+        "rules": 15,
+        "blocks": 3,
+        "reviewed": "2026-11-02",
+        "days_old": 10,
+        "due_in_days": 80,
+        "stale": false,
+        "confirmed": false
+      },
+      {
+        "file": "etsy-uk-compliance.yml",
+        "scope": "etsy-uk",
+        "rules": 15,
+        "blocks": 5,
+        "reviewed": "2026-11-12",
+        "days_old": 0,
+        "due_in_days": 90,
+        "stale": false,
+        "confirmed": false
+      },
+      {
+        "file": "social-selling-compliance.yml",
+        "scope": "social",
+        "rules": 13,
+        "blocks": 2,
+        "reviewed": "2026-11-02",
+        "days_old": 10,
+        "due_in_days": 80,
+        "stale": false,
+        "confirmed": false
+      }
+    ],
+    "fees": [
+      {
+        "channel": "ebay-uk",
+        "confirmed": false,
+        "fee_pct": 15.9,
+        "fixed_gbp": 0.48,
+        "breakdown": {
+          "final_value_pct": 12.9,
+          "regulatory_operating_pct": 0.35,
+          "per_order_gbp_over_10": 0.4,
+          "per_order_gbp_up_to_10": 0.3,
+          "vat_on_fees_pct": 20
+        }
+      },
+      {
+        "channel": "etsy-uk",
+        "confirmed": false,
+        "fee_pct": 13.0,
+        "fixed_gbp": 0.42,
+        "breakdown": {
+          "transaction_pct": 6.5,
+          "payment_processing_pct": 4.0,
+          "payment_fixed_gbp": 0.2,
+          "listing_fee_gbp": 0.15,
+          "regulatory_operating_pct": 0.35,
+          "offsite_ads_pct": 15,
+          "offsite_ads_opted_out": true,
+          "vat_on_fees_pct": 20
+        }
+      },
+      {
+        "channel": "social",
+        "confirmed": false,
+        "fee_pct": 8.0,
+        "fixed_gbp": 0.25,
+        "breakdown": {}
+      }
+    ],
+    "postage": {
+      "royal_mail_tracked48_large_letter_1kg": 2.9,
+      "royal_mail_tracked48_small_parcel_2kg": 3.75,
+      "royal_mail_tracked48_small_parcel_counter": 4.7,
+      "evri_parcelshop_small_parcel": 2.62,
+      "evri_door_small_parcel": 3.04
+    },
+    "channels": [
+      {
+        "id": "ebay-uk",
+        "label": "eBay UK",
+        "enabled": true,
+        "mode": "manual",
+        "lanes": [
+          "ebay_resale",
+          "etsy_gift_box",
+          "etsy_designed",
+          "etsy_personalised"
+        ]
+      },
+      {
+        "id": "etsy-uk",
+        "label": "Etsy UK",
+        "enabled": true,
+        "mode": "manual",
+        "lanes": [
+          "etsy_gift_box",
+          "etsy_designed",
+          "etsy_personalised"
+        ]
+      }
+    ]
+  }
 };

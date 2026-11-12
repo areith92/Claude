@@ -53,10 +53,10 @@ class Sops(unittest.TestCase):
 
 class Search(unittest.TestCase):
     def test_sop_text_and_context(self):
-        self.assertIn("Write the title within eBay", bs.sop_text("listings"))
+        self.assertIn("Write the title within eBay", bs.sop_text("merchandiser"))
         self.assertIsNone(bs.sop_text("nobody"))
-        ctx = bs.brain_context("listings", "Draft a listing")
-        self.assertIn("Your standing procedure (SOP), from memory/brain/sops/listings.md", ctx)
+        ctx = bs.brain_context("merchandiser", "Draft a listing")
+        self.assertIn("Your standing procedure (SOP), from memory/brain/sops/merchandiser.md", ctx)
 
     def test_related_notes_are_found_and_sops_are_not_repeated(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -66,20 +66,20 @@ class Search(unittest.TestCase):
                 "---\ntitle: Acme Widgets supplier lead times\ntags: [suppliers, acme]\n---\nAcme ships in 5 working days and charges 4 GBP postage.\n")
             found = bs.search("what is the Acme lead time", repo)
             self.assertEqual([n["path"] for n in found], ["memory/brain/suppliers/acme.md"])
-            self.assertIn("5 working days", bs.brain_context("inventory", "Acme lead time", repo))
+            self.assertIn("5 working days", bs.brain_context("fulfilment", "Acme lead time", repo))
             self.assertEqual(bs.search("how do I draft a listing title", repo), [])  # SOPs come in through the agent's own slot
 
     def test_permission_is_respected(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = copy_repo(tmp)
-            perms = repo / "agents/listings/permissions.yml"
+            perms = repo / "agents/merchandiser/permissions.yml"
             perms.write_text(perms.read_text().replace("memory/brain/, ", ""))
-            self.assertIn("Not loaded", bs.brain_context("listings", "x", repo))
+            self.assertIn("Not loaded", bs.brain_context("merchandiser", "x", repo))
 
     def test_run_agent_puts_the_sop_in_the_prompt(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = copy_repo(tmp)
-            r = subprocess.run([sys.executable, "scripts/run_agent.py", "--agent", "listings", "--task", "Draft a listing for SKU-001", "--manual"],
+            r = subprocess.run([sys.executable, "scripts/run_agent.py", "--agent", "merchandiser", "--task", "Draft a listing for SKU-001", "--manual"],
                                cwd=repo, capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             name = re.search(r"outbox/(\S+)", r.stdout).group(1)
@@ -94,7 +94,7 @@ class Search(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             data = json.loads((repo / "dashboard/status.json").read_text())
             self.assertTrue(all(a["sop"]["exists"] for a in data["agents"]))
-            ts = next(a for a in data["agents"] if a["name"] == "techsupport")
+            ts = next(a for a in data["agents"] if a["name"] == "tech-support")
             self.assertGreaterEqual(len(ts["sop"]["steps"]), 5)
             self.assertGreaterEqual(data["brain"]["count"], len(AGENTS))
 
