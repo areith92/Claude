@@ -124,6 +124,11 @@ def main():
         bg.write_stop_marker(ROOT, a.agent, scope, spent, cap)
         print(f"STOPPED: this call would take the {scope} AI budget over its cap. See budget-stop.json and the budget alert.")
         return 5
+    import pacing
+    on_pace, spent_now, allowed_now = pacing.check()
+    if not on_pace:
+        print(f"Deferred by pacing: spend {spent_now:.2f} GBP is ahead of the {allowed_now:.2f} GBP allowance so far this month. Try again tomorrow, or use --manual.")
+        return 7
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         print("Refused: ANTHROPIC_API_KEY is not set.")
