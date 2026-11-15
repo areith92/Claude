@@ -13,7 +13,7 @@ A department playbook lives in memory/brain/sops/departments/tech-support.md. It
 Find, test and fix faults safely, without ever pushing or merging anything itself.
 
 ## Who
-- techsupport
+- tech-support
 
 ## Daily routine
 1. Look at python3 scripts/techsupport.py status for open incidents. Work the oldest high-severity one first.

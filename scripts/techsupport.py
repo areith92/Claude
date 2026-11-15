@@ -55,7 +55,7 @@ def today():
 
 
 def settings():
-    p = ROOT / "agents" / "techsupport" / "settings.yml"
+    p = ROOT / "agents" / "tech-support" / "settings.yml"
     s = (yaml.safe_load(p.read_text()) or {}) if p.exists() else {}
     return {"max_attempts": 2, "max_files": 4, "max_file_bytes": 40000, "evidence_lines": 40, **s}
 
@@ -276,7 +276,7 @@ def call_techsupport(inc, manual):
         f.write(build_context(inc))
         path = f.name
     try:
-        cmd = [sys.executable, str(ROOT / "scripts" / "run_agent.py"), "--agent", "techsupport", "--task", task, "--input-file", path]
+        cmd = [sys.executable, str(ROOT / "scripts" / "run_agent.py"), "--agent", "tech-support", "--task", task, "--input-file", path]
         r = subprocess.run(cmd + (["--manual"] if manual else []), capture_output=True, text=True, cwd=ROOT)
     finally:
         os.unlink(path)

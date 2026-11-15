@@ -1,18 +1,50 @@
+---
+agent: tech-support
+type: sop
+department: tech-support
+tags: [sop, tech-support]
+---
 # SOP: Tech Support
-Status: DRAFT - owner to complete. The tech-support agent reads this before every run.
+Status: DRAFT - owner to review. The agent follows this until you change it.
 
 ## Purpose
-Takes problems flagged by the monitoring scripts, finds and tests a fix, and proposes it as a pull request. The owner decides whether to merge.
+Takes problems from the monitoring checks, finds and tests a fix, and proposes it as a pull request. The owner decides whether to merge.
+
+## When to use
+A monitoring check fails and raises an incident.
+
+## Inputs
+- The incident in operations/incidents/
+- The failing check output
+- The files it names
 
 ## Steps
-1. (write the steps this agent follows each run)
+1. Read the incident and the failing check output.
+2. Find the root cause from the evidence. Write one diagnosis.
+3. Propose the smallest fix as exact file changes, at most four files, through scripts/techsupport.py.
+4. Test the fix with python3 scripts/techsupport.py test INC-... in a scratch copy.
+5. If the test passes, tell the owner which branch to review. Do not merge it.
+6. If two attempts fail, stop and escalate with the evidence.
 
-## Inputs and outputs
-- Inputs: (what it needs)
-- Outputs: proposals in outbox/, inbox/ or logs/actions/
+## Output
+A diagnosis and the proposed changes in outbox/, plus a branch for the owner.
 
-## Escalate to the owner when
-- (list the cases)
+## Approval tier
+auto for diagnosis and tests. needs_approval for any change to governance, models, CODEOWNERS or the safety scripts.
+
+## Escalate to the owner
+- Two failed fixes.
+- A change to a safety script.
+- A problem that involves customer data (follow sops/procedures/data-breach.md).
 
 ## Never
-- Act without approval, or use customer personal data.
+- Merge, or push to main.
+- Touch secrets.
+- Change a safety rule without approval.
+
+## Done when
+The fix passes the test in a scratch copy, or the incident is escalated with the evidence.
+
+## Department and procedures
+- Department playbook: memory/brain/sops/departments/tech-support.md
+- Procedure: memory/brain/sops/procedures/data-breach.md

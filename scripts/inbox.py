@@ -27,7 +27,7 @@ from store import StoreError, open_store  # noqa: E402
 PATTERNS = [("EMAIL", r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), ("LINK", r"https?://\S+|www\.\S+"), ("CARD", r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)"),
             ("PHONE", r"(?<!\d)(?:\+44\s?\(?0?\)?|0)\s?\d{2,4}[\s-]?\d{3,4}[\s-]?\d{3,4}(?!\d)"), ("POSTCODE", r"\b[A-Za-z]{1,2}\d[A-Za-z\d]?\s?\d[A-Za-z]{2}\b"),
             ("HANDLE", r"(?<!\w)@[A-Za-z0-9_.]{2,}")]
-AGENT_FOR = {"facebook": "facebook", "instagram": "instagram", "tiktok": "tiktok", "pinterest": "pinterest"}
+AGENT_FOR = {}  # social messages go to customer-care, the only roster agent for customer messages
 
 
 def redact(text):
@@ -141,7 +141,7 @@ def cmd_prompt(st, mid):
     m = rows[0]
     inbound = next((x for x in st.select("messages", {"conversation_id": m["conversation_id"]}) if x["direction"] == "in"), m)
     platform = (inbound.get("meta") or {}).get("platform", "")
-    agent = AGENT_FOR.get(platform, "messages")
+    agent = AGENT_FOR.get(platform, "customer-care")
     facts = {k: v for k, v in load_yaml("catalogue/support/facts.yml").items() if v not in (None, "")}
     text = f"Platform: {platform}\nKind: {(inbound.get('meta') or {}).get('kind')}\nCustomer message (personal data removed):\n{inbound['body_redacted']}\n\nFacts you may use:\n{yaml.safe_dump(facts) if facts else '(none filled in yet: do not invent any)'}\n"
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:

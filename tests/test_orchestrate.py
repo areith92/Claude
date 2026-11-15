@@ -10,8 +10,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import orchestrate as orc  # noqa: E402
 
-AGENTS = {"listings": {"enabled": True}, "compliance": {"enabled": True}, "pricing": {"enabled": False},
-          "orchestrator": {"enabled": True}}
+AGENTS = {"merchandiser": {"enabled": True}, "compliance": {"enabled": True}, "marketing": {"enabled": False},
+          "chief-of-staff": {"enabled": True}}
 
 
 def task(agent, tier="needs_approval", obj="Do a thing for SKU-001"):
@@ -36,24 +36,24 @@ class Validation(unittest.TestCase):
         return orc.validate_plan({"tasks": tasks}, AGENTS, max_tasks, list(existing))
 
     def test_good_and_blocked(self):
-        tasks, problems = self.check([task("listings"), task("pricing")])
+        tasks, problems = self.check([task("merchandiser"), task("marketing")])
         self.assertEqual([t["status"] for t in tasks], ["queued", "blocked"])
         self.assertEqual(problems, [])
 
     def test_rejects_unknown_self_never_and_pii(self):
-        tasks, problems = self.check([task("marketing"), task("orchestrator"), task("listings", "never"),
-                                      task("listings", obj="Email bob@example.com about it")])
+        tasks, problems = self.check([task("facebook"), task("chief-of-staff"), task("merchandiser", "never"),
+                                      task("merchandiser", obj="Email bob@example.com about it")])
         self.assertEqual(tasks, [])
         self.assertEqual(len(problems), 4)
 
     def test_cap_and_ids(self):
-        tasks, problems = self.check([task("listings")] * 4, max_tasks=3, existing=["T-20990101-001"])
+        tasks, problems = self.check([task("merchandiser")] * 4, max_tasks=3, existing=["T-20990101-001"])
         self.assertEqual(len(tasks), 3)
         self.assertTrue(problems)
         self.assertEqual(len({t["id"] for t in tasks}), 3)
 
     def test_unknown_tier_becomes_strict(self):
-        tasks, _ = self.check([task("listings", "whatever")])
+        tasks, _ = self.check([task("merchandiser", "whatever")])
         self.assertEqual(tasks[0]["tier"], "needs_approval")
 
     def test_no_plan(self):
@@ -100,25 +100,25 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             q = orc.yaml.safe_load((repo / "operations/tasks/queue.yml").read_text())
             by_agent = {t["agent"]: t for t in q["tasks"]}
-            self.assertEqual(by_agent["listings"]["status"], "delegated")
+            self.assertEqual(by_agent["merchandiser"]["status"], "delegated")
             self.assertEqual(by_agent["compliance"]["status"], "delegated")
-            self.assertEqual(by_agent["inventory"]["status"], "blocked")
+            self.assertEqual(by_agent["marketing"]["status"], "blocked")
 
             (repo / "inbox").mkdir(exist_ok=True)
-            for agent, tier in (("listings", "needs_approval"), ("compliance", "auto")):
+            for agent, tier in (("merchandiser", "needs_approval"), ("compliance", "auto")):
                 name = pathlib.Path(by_agent[agent]["prompt_file"]).name
                 (repo / "inbox" / name).write_text(f"Summary: ok.\nApproval tier: {tier}\n")
 
             r = self.run_cli(repo, "digest")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             digest = next((repo / "reports/digests").glob("*.md")).read_text()
-            self.assertIn(by_agent["listings"]["id"], digest)
+            self.assertIn(by_agent["merchandiser"]["id"], digest)
             q = orc.yaml.safe_load((repo / "operations/tasks/queue.yml").read_text())
             by_agent = {t["agent"]: t for t in q["tasks"]}
-            self.assertEqual(by_agent["listings"]["status"], "replied")
+            self.assertEqual(by_agent["merchandiser"]["status"], "replied")
             self.assertEqual(by_agent["compliance"]["status"], "done")
 
-            lid = by_agent["listings"]["id"]
+            lid = by_agent["merchandiser"]["id"]
             r = self.run_cli(repo, "decide", lid, "approved", "--reason", "Looks good")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertTrue(list((repo / "logs/decisions").glob(f"*{lid}.md")))

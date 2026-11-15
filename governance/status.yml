@@ -8,7 +8,7 @@ agents:
   finance-insights: {enabled: true, dry_run: true}
   compliance: {enabled: true, dry_run: true, provider: api}
   reviewer: {enabled: true, dry_run: true, provider: api}
-  tech-support: {enabled: true, dry_run: true}
+  tech-support: {enabled: true, dry_run: true, provider: api}
   fulfilment: {enabled: true, dry_run: true}
   customer-care: {enabled: true, dry_run: true}
   marketing: {enabled: false, dry_run: true}

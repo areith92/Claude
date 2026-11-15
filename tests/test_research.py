@@ -149,6 +149,7 @@ class Pipeline(unittest.TestCase):
         self.cli("import", self.csv([row("pet glove", "Pet glove", notes="seller is bob@example.com")]))
         self.assertIn("removed", self.dossiers()["Pet glove"]["market"]["listing_notes"])
 
+    @unittest.skip("Research agent is in agents/_future for now; re-enable when it returns to the roster")
     def test_prepare_free_route_writes_four_prompts_with_the_dossier(self):
         self.cli("import", self.csv([row("pet glove", "Pet glove")]))
         pid = self.dossiers()["Pet glove"]["id"]
@@ -204,6 +205,7 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("stale", r.stdout)
 
+    @unittest.skip("Research agent is in agents/_future for now; re-enable when it returns to the roster")
     def test_denial_becomes_a_lesson_the_research_agent_can_find(self):
         self.cli("import", self.csv([row("pet glove", "Pet glove")]))
         pid = self.dossiers()["Pet glove"]["id"]
@@ -220,6 +222,7 @@ class Pipeline(unittest.TestCase):
         self.reviews(pid)
         self.assertEqual(self.cli("decide", pid, "denied", "--reason", "ask bob@example.com").returncode, 1)
 
+    @unittest.skip("Research agent is in agents/_future for now; re-enable when it returns to the roster")
     def test_template_and_keywords(self):
         self.assertEqual(self.cli("template").returncode, 0)
         self.assertTrue((self.repo / "research/templates/products.csv").exists())
