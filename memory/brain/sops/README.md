@@ -10,26 +10,16 @@ python3 scripts/brain_search.py "your question" --agent listings
 
 | Agent | SOP | Status |
 |---|---|---|
-| orchestrator | Plan, delegate, review, digest | active |
-| listings | Draft an eBay UK listing | active |
-| orders | Review new orders and shipping | active |
-| messages | Triage buyer messages and draft replies | active |
-| finance | Reconcile and prepare the accountant pack | active |
+| chief-of-staff | Plan, delegate, review, digest | active |
+| sourcing | Check suppliers and fulfilment model | active |
+| merchandiser | Draft an eBay UK listing and price | active |
+| finance-insights | Margin, cost log and accountant pack | active |
 | compliance | Check a proposal against the rules | active |
 | reviewer | Independent second opinion | active |
-| monitor | Watch spend, health and errors | active |
-| pricing | Propose a price change | ready (agent disabled) |
-| inventory | Track stock and propose reorders | ready (agent disabled) |
-| returns | Handle a return or dispute | ready (agent disabled) |
-| analytics | Margin per product and dashboard data | ready (agent disabled) |
 | tech-support | Diagnose and fix a failing check | active |
-| research | Find and rank product opportunities | active |
-| sourcing | Check suppliers and fulfilment model | active |
-| facebook | Facebook comments and messages | active |
-| instagram | Instagram comments and messages | active |
-| tiktok | TikTok comments and messages | active |
-| pinterest | Pinterest comments and messages | active |
-| marketing | Plan content and propose campaigns | active |
+| fulfilment | Orders, supplier orders and parcel checks | active |
+| customer-care | Triage and draft replies to customer messages | active |
+| marketing | Plan content and propose campaigns | disabled |
 
 ## Department playbooks
 One playbook per department in memory/brain/sops/departments/: the daily, weekly and monthly routine, the commands to use, handoffs, escalation and measures. scripts/run_agent.py adds an agent's department playbook to its prompt.

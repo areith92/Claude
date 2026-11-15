@@ -10,7 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import orchestrate as orc  # noqa: E402
 
-AGENTS = {"merchandiser": {"enabled": True}, "compliance": {"enabled": True}, "sourcing": {"enabled": False},
+AGENTS = {"merchandiser": {"enabled": True}, "compliance": {"enabled": True}, "marketing": {"enabled": False},
           "chief-of-staff": {"enabled": True}}
 
 
@@ -36,12 +36,12 @@ class Validation(unittest.TestCase):
         return orc.validate_plan({"tasks": tasks}, AGENTS, max_tasks, list(existing))
 
     def test_good_and_blocked(self):
-        tasks, problems = self.check([task("merchandiser"), task("sourcing")])
+        tasks, problems = self.check([task("merchandiser"), task("marketing")])
         self.assertEqual([t["status"] for t in tasks], ["queued", "blocked"])
         self.assertEqual(problems, [])
 
     def test_rejects_unknown_self_never_and_pii(self):
-        tasks, problems = self.check([task("marketing"), task("chief-of-staff"), task("merchandiser", "never"),
+        tasks, problems = self.check([task("facebook"), task("chief-of-staff"), task("merchandiser", "never"),
                                       task("merchandiser", obj="Email bob@example.com about it")])
         self.assertEqual(tasks, [])
         self.assertEqual(len(problems), 4)
@@ -102,7 +102,7 @@ class EndToEnd(unittest.TestCase):
             by_agent = {t["agent"]: t for t in q["tasks"]}
             self.assertEqual(by_agent["merchandiser"]["status"], "delegated")
             self.assertEqual(by_agent["compliance"]["status"], "delegated")
-            self.assertEqual(by_agent["sourcing"]["status"], "blocked")
+            self.assertEqual(by_agent["marketing"]["status"], "blocked")
 
             (repo / "inbox").mkdir(exist_ok=True)
             for agent, tier in (("merchandiser", "needs_approval"), ("compliance", "auto")):
