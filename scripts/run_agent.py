@@ -113,6 +113,17 @@ def main():
     if total >= caps["total_monthly_cap"] or per_agent.get(a.agent, 0) >= caps["per_agent_monthly_cap"].get(a.agent, 0):
         print("Refused: AI budget cap reached (or still 0) in governance/budgets.yml.")
         return 5
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import budget_guard as bg
+    worst = bg.worst_case_cost(len(prompt), model_cfg.get("max_tokens", 1500), rin, rout)
+    total_cap = caps["total_monthly_cap"]
+    agent_cap = caps["per_agent_monthly_cap"].get(a.agent, 0)
+    scope = bg.would_exceed(total, per_agent.get(a.agent, 0), worst, total_cap, agent_cap)
+    if scope:
+        spent, cap = (total, total_cap) if scope == "total" else (per_agent.get(a.agent, 0), agent_cap)
+        bg.write_stop_marker(ROOT, a.agent, scope, spent, cap)
+        print(f"STOPPED: this call would take the {scope} AI budget over its cap. See budget-stop.json and the budget alert.")
+        return 5
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         print("Refused: ANTHROPIC_API_KEY is not set.")

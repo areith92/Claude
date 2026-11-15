@@ -38,7 +38,7 @@ PLAN_TASK = (
     "Choose at most {n} tasks. Only use agents marked enabled in the context. Never delegate to the orchestrator.\n"
     "Prefer cheap, high-volume work for gemini agents. Do not repeat rejected or deferred work.\n"
     "In the Proposal section include exactly one fenced json block shaped like this:\n"
-    '{"tasks": [{"agent": "listings", "objective": "what to do", "why": "one line", '
+    '{"tasks": [{"agent": "merchandiser", "objective": "what to do", "why": "one line", '
     '"approval_tier": "auto or needs_approval or needs_owner_and_accountant"}], "notes_for_next_run": "short note"}\n'
     "Use order IDs only. No personal data. If nothing useful can be planned, return an empty tasks list and say why."
 )
@@ -55,7 +55,7 @@ def now():
 
 
 def settings():
-    p = ROOT / "agents" / "orchestrator" / "settings.yml"
+    p = ROOT / "agents" / "chief-of-staff" / "settings.yml"
     s = (yaml.safe_load(p.read_text()) or {}) if p.exists() else {}
     return {"max_tasks_per_run": 3, "max_review_chars_per_reply": 6000, **s}
 
@@ -105,7 +105,7 @@ def validate_plan(plan, agents_cfg, max_tasks, existing_ids, today=None):
         agent = str(raw.get("agent", "")).strip()
         objective = str(raw.get("objective", "")).strip()
         why = str(raw.get("why", "")).strip()
-        if agent == "orchestrator" or agent not in agents_cfg:
+        if agent == "chief-of-staff" or agent not in agents_cfg:
             problems.append(f"Skipped a task for unknown or not-allowed agent '{agent}'.")
             continue
         if not objective:
@@ -212,7 +212,7 @@ def cmd_plan(a):
         print("PAUSED: governance/status.yml has paused: true. Nothing was run.")
         return 0
     task = PLAN_TASK.replace("{goal}", a.goal).replace("{n}", str(settings()["max_tasks_per_run"]))
-    rc, out, _ = with_tempfile(build_context(), lambda p: run_agent("orchestrator", task, p))
+    rc, out, _ = with_tempfile(build_context(), lambda p: run_agent("chief-of-staff", task, p))
     print(out)
     return rc
 
@@ -268,7 +268,7 @@ def cmd_review(a):
     if not ids:
         print("Nothing to review yet: no replies saved in inbox/ (or they contain personal data).")
         return 0
-    rc, out, f = with_tempfile("\n\n".join(parts) + "\n", lambda p: run_agent("orchestrator", REVIEW_TASK, p))
+    rc, out, f = with_tempfile("\n\n".join(parts) + "\n", lambda p: run_agent("chief-of-staff", REVIEW_TASK, p))
     print(out)
     if rc == 0 and f:
         q["review"] = {"prompt_file": f, "task_ids": ids}

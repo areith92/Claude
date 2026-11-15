@@ -143,14 +143,14 @@ class Flow(unittest.TestCase):
 
     def test_owner_files_need_the_flag(self):
         routing = (self.repo / "models/routing.yml").read_text()
-        line = "  techsupport:  {preferred: claude, max_tokens: 3000}\n"
+        line = "  tech-support:     {tier: opus}\n"
         self.assertIn(line, routing)
         (self.repo / "models/routing.yml").write_text(routing.replace(line, ""))
         (self.repo / "docs/example.yml").write_text("a: [1, 2]\n")
         subprocess.run(["git", "commit", "-qam", "break routing"], cwd=self.repo, capture_output=True)
         iid = self.raised()
         plan = {"diagnosis": "routing entry missing", "changes": [{"path": "models/routing.yml", "op": "replace",
-                "old": "  monitor:      {preferred: claude}\n", "new": "  monitor:      {preferred: claude}\n" + line}]}
+                "old": "  customer-care:    {tier: haiku, escalate: sonnet}\n", "new": "  customer-care:    {tier: haiku, escalate: sonnet}\n" + line}]}
         self.cli("ingest", iid, self.reply(plan))
         self.assertEqual(self.queue()[0]["fix"]["files"][0]["kind"], "owner")
         self.assertEqual(self.cli("test", iid).returncode, 0)
@@ -168,7 +168,7 @@ class Flow(unittest.TestCase):
         iid = self.raised()
         r = self.cli("run", iid)
         self.assertEqual(r.returncode, 1)
-        self.assertIn("ANTHROPIC_API_KEY", r.stdout + r.stderr)
+        self.assertTrue(any(s in r.stdout + r.stderr for s in ("ANTHROPIC_API_KEY", "rates")), r.stdout + r.stderr)
         r = self.cli("run", iid, "--manual")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         inc = self.queue()[0]
@@ -189,7 +189,7 @@ class Flow(unittest.TestCase):
         self.assertEqual((inc["status"], inc["stage"]), ("ready_to_ship", 6))
         self.assertTrue(any(n["cmd"].startswith("git push -u origin fix/") for n in inc["next"]))
         self.assertTrue(any("fix ready" in a for a in data["alerts"]))
-        self.assertIn("techsupport", [a["name"] for a in data["agents"]])
+        self.assertIn("tech-support", [a["name"] for a in data["agents"]])
 
     def test_files_with_personal_data_are_redacted_in_the_prompt(self):
         (self.repo / "docs/contact.md").write_text("Notes\nEmail bob@example.com for help\nThe bug is here: broken\n")

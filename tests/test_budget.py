@@ -15,11 +15,11 @@ ai_costs:
   total_monthly_cap: {total}
   alert_at_percent: 80
   per_agent_monthly_cap:
-    orchestrator: 2
-    listings: {listings}
-    orders: 0
-    messages: 0
-    finance: 0
+    chief-of-staff: 2
+    merchandiser: {listings}
+    fulfilment: 0
+    customer-care: 0
+    finance-insights: 0
     compliance: 1
     reviewer: 0
     monitor: 0
@@ -29,7 +29,7 @@ ai_costs:
     analytics: 0
 spend: {{promoted_listings_monthly_cap: 0, stock_purchases_monthly_cap: 0, other_monthly_cap: 0}}
 """
-COSTS = "claude:\n  input_per_mtok_gbp: 1.6\n  output_per_mtok_gbp: 8\ngemini:\n  free_tier: true\n  input_per_mtok_gbp: 0\n  output_per_mtok_gbp: 0\n"
+COSTS = "haiku:\n  input_per_mtok_gbp: 1.6\n  output_per_mtok_gbp: 8\nsonnet:\n  input_per_mtok_gbp: 1.6\n  output_per_mtok_gbp: 8\nopus:\n  input_per_mtok_gbp: 1.6\n  output_per_mtok_gbp: 8\n"
 
 
 class Logic(unittest.TestCase):
@@ -57,8 +57,8 @@ class Integration(unittest.TestCase):
         (repo / "governance/budgets.yml").write_text(BUDGETS.format(total=total, listings=listings))
         (repo / "models/costs.yml").write_text(COSTS)
         s = repo / "governance/status.yml"
-        s.write_text(s.read_text().replace("  listings:     {enabled: true,  dry_run: true}",
-                                           "  listings:     {enabled: true,  dry_run: true, provider: api}"))
+        s.write_text(s.read_text().replace("  merchandiser: {enabled: true, dry_run: true}",
+                                           "  merchandiser: {enabled: true, dry_run: true, provider: api}"))
         (repo / "logs/costs.csv").write_text("date,agent,provider,model,input_tokens,output_tokens,cost_gbp,note\n")
         for f in ("logs/budget-stop.json",):
             (repo / f).unlink(missing_ok=True)
@@ -71,7 +71,7 @@ class Integration(unittest.TestCase):
     def test_cap_blocks_call_and_raises_alert(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = self.repo(tmp, total=0.001)
-            r = self.run_py(repo, "scripts/run_agent.py", "--agent", "listings", "--task", "Draft a listing for SKU-001")
+            r = self.run_py(repo, "scripts/run_agent.py", "--agent", "merchandiser", "--task", "Draft a listing for SKU-001")
             self.assertEqual(r.returncode, 5, r.stdout + r.stderr)
             self.assertIn("STOPPED", r.stdout)
             self.assertEqual(json.loads((repo / "logs/budget-stop.json").read_text())["scope"], "total")
@@ -84,7 +84,7 @@ class Integration(unittest.TestCase):
     def test_zero_cap_blocks_without_alert(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = self.repo(tmp, total=0, listings=0)
-            r = self.run_py(repo, "scripts/run_agent.py", "--agent", "listings", "--task", "Draft a listing for SKU-001")
+            r = self.run_py(repo, "scripts/run_agent.py", "--agent", "merchandiser", "--task", "Draft a listing for SKU-001")
             self.assertEqual(r.returncode, 5, r.stdout + r.stderr)
             self.assertFalse((repo / "logs/budget-stop.json").exists())
 
@@ -100,7 +100,7 @@ class Integration(unittest.TestCase):
             repo = self.repo(tmp, total=5)
             (repo / "logs/costs.csv").write_text(
                 "date,agent,provider,model,input_tokens,output_tokens,cost_gbp,note\n"
-                f"{__import__('datetime').date.today()},orchestrator,anthropic,claude-sonnet-5-5,1000,1000,4.2,\n")
+                f"{__import__('datetime').date.today()},chief-of-staff,anthropic,claude-sonnet-5-5,1000,1000,4.2,\n")
             self.run_py(repo, "scripts/build_dashboard.py", "--alert-file", str(repo / "alert.md"))
             self.assertTrue((repo / "alert.md").read_text().startswith("# AI budget warning"))
 

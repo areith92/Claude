@@ -22,7 +22,7 @@ python3 scripts/brain_search.py "your question" --agent listings
 | inventory | Track stock and propose reorders | ready (agent disabled) |
 | returns | Handle a return or dispute | ready (agent disabled) |
 | analytics | Margin per product and dashboard data | ready (agent disabled) |
-| techsupport | Diagnose and fix a failing check | active |
+| tech-support | Diagnose and fix a failing check | active |
 | research | Find and rank product opportunities | active |
 | sourcing | Check suppliers and fulfilment model | active |
 | facebook | Facebook comments and messages | active |
