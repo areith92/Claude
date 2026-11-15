@@ -6,3 +6,12 @@
 /models/                @areith92
 /channels/*/config.yml  @areith92
 /CODEOWNERS             @areith92
+/CLAUDE.md              @areith92
+/scripts/techsupport.py @areith92
+/scripts/budget_guard.py @areith92
+/scripts/pii_guard.py   @areith92
+/scripts/check_secrets.py @areith92
+/scripts/check_budget.py @areith92
+/scripts/validate_config.py @areith92
+/scripts/run_agent.py   @areith92
+/scripts/monitor_checks.py @areith92

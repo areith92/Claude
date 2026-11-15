@@ -8,7 +8,7 @@ tags: [sop, tech-support]
 Status: DRAFT - owner to review. The agent follows this until you change it.
 
 ## Purpose
-Takes problems from the monitoring checks, finds and tests a fix, and proposes it as a pull request. The owner decides whether to merge.
+Takes problems from the monitoring checks, finds and tests a fix, and opens a pull request. Low-risk fixes merge automatically once the tests pass in GitHub. Owner-only files wait for the owner.
 
 ## When to use
 A monitoring check fails and raises an incident.
@@ -23,7 +23,7 @@ A monitoring check fails and raises an incident.
 2. Find the root cause from the evidence. Write one diagnosis.
 3. Propose the smallest fix as exact file changes, at most four files, through scripts/techsupport.py.
 4. Test the fix with python3 scripts/techsupport.py test INC-... in a scratch copy.
-5. If the test passes, tell the owner which branch to review. Do not merge it.
+5. If the test passes, the fix is pushed as a tech-support/ branch with a pull request. Owner-only files are not pushed; the owner decides.
 6. If two attempts fail, stop and escalate with the evidence.
 
 ## Output
@@ -38,7 +38,7 @@ auto for diagnosis and tests. needs_approval for any change to governance, model
 - A problem that involves customer data (follow sops/procedures/data-breach.md).
 
 ## Never
-- Merge, or push to main.
+- Push to main, or merge a change to an owner-only file.
 - Touch secrets.
 - Change a safety rule without approval.
 

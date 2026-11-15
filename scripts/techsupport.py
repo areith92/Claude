@@ -371,7 +371,7 @@ def do_implement(inc, include_owner):
     if dirty():
         sys.exit("You have uncommitted changes. Commit or stash them first:\n" + "\n".join(dirty()[:8]))
     base = git("branch", "--show-current").stdout.strip()
-    branch = "fix/" + inc["id"].lower()
+    branch = "tech-support/" + inc["id"].lower()
     r = git("checkout", "-b", branch)
     if r.returncode:
         sys.exit("Could not create the branch: " + r.stderr.strip())
@@ -407,6 +407,60 @@ def do_implement(inc, include_owner):
     return True
 
 
+def publish(inc):
+    """Pushes a verified fix that touches only low-risk files and opens a pull request. The merge workflow merges it when the tests pass in GitHub. Owner-only fixes are never published here."""
+    if any(f["kind"] == "owner" for f in inc["fix"]["files"]):
+        return False
+    b = inc["branch"]
+    pushed = git("push", "-u", "origin", b)
+    if pushed.returncode:
+        print("Could not push the fix branch, so no pull request was opened:", pushed.stderr.strip())
+        return False
+    body = (f"Automatic fix for {inc['id']}.\n\nWhat was wrong: {inc.get('diagnosis', '')}\n\n"
+            f"Root cause: {inc.get('root_cause', '')}\n\n{inc['live']['summary']}\n\n"
+            "The merge workflow merges this only if the tests pass and only low-risk files changed.")
+    opened = subprocess.run(["gh", "pr", "create", "--base", "main", "--head", b,
+                             "--title", f"Fix {inc['id']}: {inc['title']}", "--body", body],
+                            cwd=ROOT, capture_output=True, text=True)
+    if opened.returncode:
+        print("Could not open the pull request:", opened.stderr.strip())
+        return False
+    print("Pull request opened:", opened.stdout.strip())
+    return True
+
+
+def report_failure(inc):
+    """After the last attempt, writes a report for the owner and opens a GitHub issue that mentions them."""
+    lines = [
+        f"Tech Support could not fix {inc['id']}: {inc['title']}",
+        "",
+        f"Attempts: {inc['attempts']}",
+        "",
+        "What the issue is:",
+        inc.get("diagnosis") or "(no diagnosis was produced)",
+        "",
+        "Root cause found:",
+        inc.get("root_cause") or "(none found)",
+        "",
+        "Why no fix passed:",
+        inc.get("last_failure") or inc.get("test", {}).get("summary", "(no test output)"),
+        "",
+        "@areith92 please review operations/incidents/ and decide the next step.",
+    ]
+    body = redact("\n".join(lines))
+    path = ROOT / "reports" / f"tech-support-{inc['id']}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body + "\n")
+    subprocess.run(["gh", "label", "create", "tech-support-report", "--color", "FBCA04", "--force"], cwd=ROOT, capture_output=True, text=True)
+    opened = subprocess.run(["gh", "issue", "create", "--title", f"Tech Support could not fix {inc['id']}",
+                             "--label", "tech-support-report", "--body-file", str(path)],
+                            cwd=ROOT, capture_output=True, text=True)
+    if opened.returncode:
+        print("Could not open the GitHub report. The report is saved at", path, "-", opened.stderr.strip())
+    else:
+        print("Report opened on GitHub:", opened.stdout.strip())
+
+
 def cmd_implement(a):
     q = load()
     inc = get(q, a.id)
@@ -418,7 +472,8 @@ def cmd_implement(a):
     if do_implement(inc, a.include_owner_files):
         note(inc, "ready_to_ship", f"Branch {inc['branch']} verified")
         save(q)
-        finish_message(inc)
+        if not publish(inc):
+            finish_message(inc)
         return 0
     inc["attempts"] += 1
     note(inc, "fix_failed", inc["live"]["summary"])
@@ -470,7 +525,8 @@ def cmd_run(a):
         if do_implement(inc, False):
             note(inc, "ready_to_ship", f"Branch {inc['branch']} verified")
             save(q)
-            finish_message(inc)
+            if not publish(inc):
+                finish_message(inc)
             return 0
         inc["attempts"] += 1
         note(inc, "fix_failed", inc["live"]["summary"])
@@ -478,6 +534,7 @@ def cmd_run(a):
         print(inc["live"]["summary"])
     note(inc, "needs_owner", f"{cfg['max_attempts']} attempts did not produce a verified fix")
     save(q)
+    report_failure(inc)
     print(f"{inc['id']}: {cfg['max_attempts']} attempts did not produce a verified fix. It needs you.")
     return 1
 
