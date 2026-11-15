@@ -187,7 +187,7 @@ class Flow(unittest.TestCase):
         data = json.loads((self.repo / "dashboard/status.json").read_text())
         inc = data["incidents"][0]
         self.assertEqual((inc["status"], inc["stage"]), ("ready_to_ship", 6))
-        self.assertTrue(any(n["cmd"].startswith("git push -u origin fix/") for n in inc["next"]))
+        self.assertTrue(any(n["cmd"].startswith("git push -u origin tech-support/") for n in inc["next"]))
         self.assertTrue(any("fix ready" in a for a in data["alerts"]))
         self.assertIn("tech-support", [a["name"] for a in data["agents"]])
 

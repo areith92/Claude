@@ -1,0 +1,38 @@
+name: Tech support auto-merge
+# Merges a Tech Support fix into main only when the tests pass and it touches low-risk files only.
+# Owner-only files (governance, .github, CODEOWNERS, models, safety scripts) still need your approval through CODEOWNERS.
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  merge:
+    if: startsWith(github.head_ref, 'tech-support/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Tests must pass
+        run: python -m unittest discover tests
+      - name: Only low-risk files may change
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          BAD=$(git diff --name-only "$BASE" "$HEAD" | grep -Ev '^(scripts/|tests/|docs/|dashboard/)' || true)
+          BAD="$BAD$(git diff --name-only "$BASE" "$HEAD" | grep -E '^dashboard/status\.(json|js)$|^scripts/(budget_guard|pii_guard|check_secrets|check_budget|validate_config|run_agent|techsupport|monitor_checks)\.py$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Not low-risk, so the owner must merge this:"; echo "$BAD"; exit 1
+          fi
+      - name: Merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR" --squash --delete-branch
